@@ -9,6 +9,7 @@ export class LiveControllerV1 {
   @Post('init')
   async funInit(@Res() res) {
     try {
+      this.service.init();
       return res.send({});
     } catch (error) {
       return res.send({ error });
