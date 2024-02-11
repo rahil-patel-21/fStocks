@@ -15,6 +15,7 @@ export class StockList extends Model<StockList> {
     allowNull: false,
     comment: 'Name of the stock',
     type: DataType.STRING(128),
+    unique: true,
   })
   name: string;
 
