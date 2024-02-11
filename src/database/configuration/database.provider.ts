@@ -1,6 +1,8 @@
 // Imports
 import { Env } from 'src/constants/env.config';
 import { Sequelize } from 'sequelize-typescript';
+import { StockList } from '../tables/Stock.list';
+import { StockPricing } from '../tables/Stock.pricing';
 import { ThirdPartyTrafficTable } from '../tables/Thirdparty.traffic.table';
 
 export const DatabaseProvider = [
@@ -8,6 +10,7 @@ export const DatabaseProvider = [
     provide: 'DATABASE_MAIN',
     useFactory: async () => {
       const sequelize = new Sequelize({
+        define: { timestamps: true, freezeTableName: true },
         dialect: 'postgres',
         host: Env.database.host,
         logging: false,
@@ -15,7 +18,7 @@ export const DatabaseProvider = [
         username: Env.database.username,
         password: Env.database.password,
         database: Env.database.name,
-        models: [ThirdPartyTrafficTable],
+        models: [StockList, StockPricing, ThirdPartyTrafficTable],
       });
       await sequelize.sync();
 
