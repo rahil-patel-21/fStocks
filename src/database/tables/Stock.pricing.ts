@@ -84,4 +84,12 @@ export class StockPricing extends Model<StockPricing> {
     type: DataType.DATE,
   })
   sessionTime: Date;
+
+  @Column({
+    allowNull: false,
+    comment: 'Unique Id',
+    type: DataType.STRING(32),
+    unique: true,
+  })
+  uniqueId: string;
 }
