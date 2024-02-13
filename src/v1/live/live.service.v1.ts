@@ -77,6 +77,8 @@ export class LiveServiceV1 {
         delete data.per;
         const date = new Date(data.ts * 1000);
         const creationData = {
+          invest: 0,
+          risk: 0,
           stockId: reqData.stockId,
           sessionTime: date,
           open: data.open,
@@ -91,6 +93,14 @@ export class LiveServiceV1 {
           ),
           uniqueId: reqData.stockId + '_' + date.getTime(),
         };
+        // Prediction to buy stock
+        if (index == candles.length - 1) {
+          const targetList = bulkList;
+          targetList.push(creationData);
+          const { invest, risk } = this.predictRisk(targetList);
+          creationData.invest = invest;
+          creationData.risk = risk;
+        }
         bulkList.push(creationData);
       } catch (error) {}
     }
@@ -130,7 +140,7 @@ export class LiveServiceV1 {
     return this.predictRisk(rangeList);
   }
 
-  async predictRisk(rangeList) {
+  predictRisk(rangeList) {
     let risk = 100;
     let invest = 0;
     // Market just opened
