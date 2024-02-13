@@ -15,4 +15,9 @@ export class DatabaseManager {
   async bulkInsert(model: ModelCtor<Model>, list: any) {
     return await model.bulkCreate(list, { ignoreDuplicates: true });
   }
+
+  async updateOne(model: ModelCtor<Model>, data: any, id: any) {
+    if (!id || !data) throw new Error();
+    return await model.update(data, { limit: 1, where: { id } });
+  }
 }

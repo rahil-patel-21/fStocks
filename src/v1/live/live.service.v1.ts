@@ -1,6 +1,6 @@
 // Imports
 import { Op } from 'sequelize';
-import * as puppeteer from 'puppeteer';
+import { gInstance } from 'src/globals';
 import { Injectable } from '@nestjs/common';
 import { FunService } from 'src/utils/fun.service';
 import { FileService } from 'src/utils/file.service';
@@ -8,8 +8,6 @@ import { StockList } from 'src/database/tables/Stock.list';
 import { DatabaseManager } from 'src/database/database.manager';
 import { StockPricing } from 'src/database/tables/Stock.pricing';
 import { ThirdPartyTrafficTable } from 'src/database/tables/Thirdparty.traffic.table';
-
-let browser: puppeteer.Browser | null = null;
 
 @Injectable()
 export class LiveServiceV1 {
@@ -21,13 +19,36 @@ export class LiveServiceV1 {
     private readonly funService: FunService,
   ) {}
 
-  async init() {
+  async init(reqData) {
+    const stockId = reqData.stockId ?? -1;
+
+    // Preparation -> Query
+    const expiredTime = new Date();
+    const currentTime = new Date();
+    // Market open
+    if (currentTime.getHours() >= 3 && currentTime.getHours() < 10)
+      expiredTime.setMinutes(expiredTime.getMinutes() - 3);
+    // Market closed
+    else expiredTime.setMinutes(expiredTime.getMinutes() - 30);
+    const stockOptions = {
+      limit: 25,
+      order: [['syncedOn', 'ASC']],
+      where: {
+        id: stockId,
+        [Op.or]: [
+          { syncedOn: { [Op.eq]: null } },
+          { syncedOn: { [Op.lte]: expiredTime } },
+        ],
+      },
+    };
+    if (stockId == -1) delete stockOptions.where.id;
     // Hit -> Query
     const targetList = await this.dbManager.getAll(
       StockList,
       ['id', 'sourceUrl'],
-      {},
+      stockOptions,
     );
+
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
       await this.syncIndividualStock(targetList[index]);
@@ -38,12 +59,8 @@ export class LiveServiceV1 {
     // Get configs
     const targetData = await this.fileService.getTargetData();
 
-    // Connect to origin
-    const browserWSEndpoint = targetData.browserWSEndpoint;
-    if (!browser) browser = await puppeteer.connect({ browserWSEndpoint });
-    const page = await browser.newPage();
-
     // Go to target page
+    const page = await gInstance.pupBrowser.newPage();
     await page.goto(stockData.sourceUrl, { waitUntil: 'networkidle0' });
     await page.bringToFront();
     await page.waitForSelector(`img[alt="${targetData.pageLoadId}"]`);
@@ -52,19 +69,31 @@ export class LiveServiceV1 {
     await page.on('response', async (response) => {
       if (response.url().includes(targetData.graphEndpoint)) {
         if (response.request().method().toUpperCase() != 'OPTIONS') {
-          const value = await response.json();
-          await this.dbManager.insert(ThirdPartyTrafficTable, {
-            source: 2,
-            type: 2,
-            value,
-          });
-          await this.syncLatestPrice({ value, stockId: stockData.id });
+          try {
+            const value = await response.json();
+            await this.dbManager.insert(ThirdPartyTrafficTable, {
+              source: 2,
+              type: 2,
+              value,
+            });
+            await this.syncLatestPrice({ value, stockId: stockData.id });
+            // Hit -> Query
+            await this.dbManager.updateOne(
+              StockList,
+              { syncedOn: new Date() },
+              stockData.id,
+            );
+          } catch (error) {
+            console.log({ error });
+          }
         }
       }
     });
 
     await page.click(`img[alt="${targetData.pageLoadId}"]`);
-    await this.funService.delay(1200);
+    await this.funService.delay(
+      this.funService.generateRandomValue(1200, 2200),
+    );
   }
 
   async syncLatestPrice(reqData) {
@@ -94,13 +123,12 @@ export class LiveServiceV1 {
           uniqueId: reqData.stockId + '_' + date.getTime(),
         };
         // Prediction to buy stock
-        if (index == candles.length - 1) {
-          const targetList = bulkList;
-          targetList.push(creationData);
-          const { invest, risk } = this.predictRisk(targetList);
-          creationData.invest = invest;
-          creationData.risk = risk;
-        }
+        const targetList = bulkList;
+        targetList.push(creationData);
+        const { invest, risk } = this.predictRisk(targetList);
+        creationData.invest = invest;
+        creationData.risk = risk;
+
         bulkList.push(creationData);
       } catch (error) {}
     }
