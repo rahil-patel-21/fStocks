@@ -4,6 +4,7 @@ import { V1Module } from './v1/v1.module';
 import { RouterModule } from 'nest-router';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
+import { UtilsModule } from './utils/utils.module';
 import { DatabaseModule } from './database/database.module';
 
 export const routes = [
@@ -14,7 +15,12 @@ export const routes = [
 ];
 
 @Module({
-  imports: [DatabaseModule, RouterModule.forRoutes(routes), V1Module],
+  imports: [
+    DatabaseModule,
+    RouterModule.forRoutes(routes),
+    UtilsModule,
+    V1Module,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

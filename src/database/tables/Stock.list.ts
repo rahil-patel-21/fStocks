@@ -39,4 +39,24 @@ export class StockList extends Model<StockList> {
     type: DataType.TEXT,
   })
   sourceUrl: string;
+
+  @Column({
+    allowNull: true,
+    defaultValue: 0,
+    type: DataType.DOUBLE,
+  })
+  invest: Date;
+
+  @Column({
+    allowNull: true,
+    defaultValue: 0,
+    type: DataType.DOUBLE,
+  })
+  risk: Date;
+
+  @Column({
+    allowNull: true,
+    type: DataType.DATE,
+  })
+  syncedOn: Date;
 }

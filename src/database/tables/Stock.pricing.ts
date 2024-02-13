@@ -49,6 +49,20 @@ export class StockPricing extends Model<StockPricing> {
   close: number;
 
   @Column({
+    allowNull: true,
+    comment: 'Risk to losing money',
+    type: DataType.DOUBLE,
+  })
+  risk: number;
+
+  @Column({
+    allowNull: true,
+    comment: 'Prediction to invest',
+    type: DataType.DOUBLE,
+  })
+  invest: number;
+
+  @Column({
     allowNull: false,
     comment:
       'Difference of open and close with respective of opening market value',
@@ -72,18 +86,18 @@ export class StockPricing extends Model<StockPricing> {
 
   @Column({
     allowNull: false,
+    comment: 'Time of the market session',
+    type: DataType.DATE,
+  })
+  sessionTime: Date;
+
+  @Column({
+    allowNull: false,
     comment:
       'Difference of high and low with respective of opening market value',
     type: DataType.DOUBLE,
   })
   volatileDiff: number;
-
-  @Column({
-    allowNull: false,
-    comment: 'Time of the market session',
-    type: DataType.DATE,
-  })
-  sessionTime: Date;
 
   @Column({
     allowNull: false,

@@ -7,9 +7,9 @@ export class LiveControllerV1 {
   constructor(private readonly service: LiveServiceV1) {}
 
   @Post('init')
-  async funInit(@Res() res) {
+  async funInit(@Body() body, @Res() res) {
     try {
-      this.service.init();
+      this.service.init(body);
       return res.send({});
     } catch (error) {
       return res.send({ error });
