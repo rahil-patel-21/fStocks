@@ -253,4 +253,59 @@ export class LiveServiceV1 {
 
     return { invest, risk };
   }
+
+  async predictPerformance(reqData) {
+    let targetDateTime = reqData.targetDateTime;
+    targetDateTime = targetDateTime.replace(' 05:30', '+05:30');
+    const minTargetDateTime = new Date(targetDateTime);
+    minTargetDateTime.setMinutes(minTargetDateTime.getMinutes() - 5);
+    const maxTargetDateTime = new Date(targetDateTime);
+
+    // Preparation -> Query
+    const stockPricingInclude: any = { model: StockPricing };
+    stockPricingInclude.where = {
+      sessionTime: { [Op.gte]: minTargetDateTime, [Op.lte]: maxTargetDateTime },
+    };
+    stockPricingInclude.order = [['stockPricingList.id', 'DESC']];
+    stockPricingInclude.attributes = ['id', 'invest', 'risk'];
+    const include = [stockPricingInclude];
+    const stockListAttr = ['id', 'name'];
+    const stockListOptions = {
+      include,
+      where: { isActive: true },
+    };
+    // Hit -> Query
+    const targetList = await this.dbManager.getAll(
+      StockList,
+      stockListAttr,
+      stockListOptions,
+    );
+
+    const finalizedList = [];
+    for (let index = 0; index < targetList.length; index++) {
+      try {
+        const targetData = targetList[index];
+        const stockPricingList = targetData.stockPricingList ?? [];
+        let score = 10;
+        stockPricingList.forEach((el, index) => {
+          if (index == 0 && el.risk > 50) score -= 2.5;
+          if (index == 0 && el.invest < 75) score -= 2.5;
+          if (el.risk > 75) score--;
+          else if (el.risk > 50) score -= 0.5;
+          else if (el.risk > 25) score -= 0.25;
+          if (el.invest < 25) score -= 0.5;
+          else if (el.invest < 50) score -= 0.25;
+        });
+        finalizedList.push({
+          name: targetData.name,
+          invest: stockPricingList[0].invest,
+          risk: stockPricingList[0].risk,
+          score,
+        });
+      } catch (error) {}
+    }
+
+    finalizedList.sort((b, a) => a.score - b.score);
+    return finalizedList;
+  }
 }

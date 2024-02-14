@@ -9,15 +9,17 @@ export class AppService implements OnModuleInit {
   constructor(private readonly fileService: FileService) {}
 
   async onModuleInit() {
-    // Get configs
-    const targetData = await this.fileService.getTargetData();
+    try {
+      // Get configs
+      const targetData = await this.fileService.getTargetData();
 
-    // Connect to origin
-    const browserWSEndpoint = targetData.browserWSEndpoint;
-    if (!gInstance.pupBrowser)
-      gInstance.pupBrowser = await puppeteer.connect({ browserWSEndpoint });
+      // Connect to origin
+      const browserWSEndpoint = targetData.browserWSEndpoint;
+      if (!gInstance.pupBrowser)
+        gInstance.pupBrowser = await puppeteer.connect({ browserWSEndpoint });
 
-    console.log('Puppy connected successfully !');
+      console.log('Puppy connected successfully !');
+    } catch (error) {}
   }
 
   getHello(): string {

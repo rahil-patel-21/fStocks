@@ -1,5 +1,6 @@
 // Imports
-import { Table, Column, Model, DataType } from 'sequelize-typescript';
+import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
+import { StockPricing } from './Stock.pricing';
 
 @Table({})
 export class StockList extends Model<StockList> {
@@ -59,4 +60,7 @@ export class StockList extends Model<StockList> {
     type: DataType.DATE,
   })
   syncedOn: Date;
+
+  @HasMany(() => StockPricing)
+  stockPricingList: StockPricing[];
 }
