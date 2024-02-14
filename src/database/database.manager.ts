@@ -5,7 +5,12 @@ import { Model, ModelCtor } from 'sequelize-typescript';
 @Injectable()
 export class DatabaseManager {
   async getAll(model: ModelCtor<Model>, attributes: any, options: any = {}) {
-    return await model.findAll({ attributes, ...options, raw: true });
+    const listData = await model.findAll({
+      attributes,
+      ...options,
+      nest: true,
+    });
+    return listData.map((element) => element.get({ plain: true }));
   }
 
   async insert(model: ModelCtor<Model>, data: any) {
