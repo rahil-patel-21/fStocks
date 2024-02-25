@@ -10,6 +10,10 @@ import { ThirdPartyModule } from './thirdparty/thirdparty.module';
 
 export const routes = [
   {
+    path: 'thirdParty',
+    module: ThirdPartyModule,
+  },
+  {
     path: 'v1',
     module: V1Module,
   },
