@@ -31,7 +31,7 @@ export class LiveServiceV1 {
     // Market closed
     else expiredTime.setMinutes(expiredTime.getMinutes() - 30);
     const stockOptions = {
-      limit: 25,
+      limit: 60,
       order: [['syncedOn', 'ASC']],
       where: {
         id: stockId,
