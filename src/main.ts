@@ -4,6 +4,7 @@ import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
 
 async function bootstrap() {
+  console.log('OKAY');
   const app = await NestFactory.create(AppModule, {
     httpsOptions: null,
     cors: true,
