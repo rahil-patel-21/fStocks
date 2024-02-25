@@ -32,6 +32,7 @@ export class LiveControllerV1 {
       const data = await this.service.predictPerformance(query);
       return res.send({ data });
     } catch (error) {
+      console.log({ error });
       return res.send({ error });
     }
   }
