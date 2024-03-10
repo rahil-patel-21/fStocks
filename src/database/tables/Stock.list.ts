@@ -1,6 +1,6 @@
 // Imports
-import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
 import { StockPricing } from './Stock.pricing';
+import { Table, Column, Model, DataType, HasMany } from 'sequelize-typescript';
 
 @Table({})
 export class StockList extends Model<StockList> {
@@ -22,24 +22,18 @@ export class StockList extends Model<StockList> {
 
   @Column({
     allowNull: false,
+    comment: 'Short name of the stock',
+    type: DataType.STRING(128),
+    unique: true,
+  })
+  shortName: string;
+
+  @Column({
+    allowNull: false,
     defaultValue: false,
     type: DataType.BOOLEAN,
   })
   isActive: boolean;
-
-  @Column({
-    allowNull: false,
-    comment: '1 -> B1',
-    defaultValue: 1,
-    type: DataType.SMALLINT,
-  })
-  source: number;
-
-  @Column({
-    allowNull: true,
-    type: DataType.TEXT,
-  })
-  sourceUrl: string;
 
   @Column({
     allowNull: true,
@@ -57,9 +51,10 @@ export class StockList extends Model<StockList> {
 
   @Column({
     allowNull: true,
-    type: DataType.DATE,
+    defaultValue: 0,
+    type: DataType.INTEGER,
   })
-  syncedOn: Date;
+  dhanId: number;
 
   @HasMany(() => StockPricing)
   stockPricingList: StockPricing[];
