@@ -19,10 +19,10 @@ export class APIService {
         ...options,
         timeout,
       });
-      //   if (!response) return k500Error;
-      //   const result = response.data;
-      //   if (!result) return k500Error;
-      return response;
+      if (!response) return false;
+      const result = response.data;
+      if (!result) return false;
+      return result;
     } catch (error) {
       //   try {
       //     if (isSendData) return kUnproccesableData(error?.response?.data);

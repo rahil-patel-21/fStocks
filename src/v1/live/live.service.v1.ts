@@ -8,6 +8,8 @@ import { StockList } from 'src/database/tables/Stock.list';
 import { DatabaseManager } from 'src/database/database.manager';
 import { StockPricing } from 'src/database/tables/Stock.pricing';
 import { ThirdPartyTrafficTable } from 'src/database/tables/Thirdparty.traffic.table';
+import { APIService } from 'src/utils/api.service';
+import { DHAN_API_GET_DATA_S } from 'src/constants/string';
 
 @Injectable()
 export class LiveServiceV1 {
@@ -17,6 +19,7 @@ export class LiveServiceV1 {
     // Utils
     private readonly fileService: FileService,
     private readonly funService: FunService,
+    private readonly apiService: APIService,
   ) {}
 
   async init(reqData) {
@@ -51,7 +54,8 @@ export class LiveServiceV1 {
 
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
-      await this.syncIndividualStock(targetList[index]);
+      await this.syncDhanIndividualStock(targetList[index]);
+      // await this.syncIndividualStock(targetList[index]);
     }
   }
 
@@ -93,6 +97,76 @@ export class LiveServiceV1 {
     await page.click(`img[alt="${targetData.pageLoadId}"]`);
     await this.funService.delay(
       this.funService.generateRandomValue(1200, 2200),
+    );
+  }
+
+  //#region Sync Dhan stock
+  async syncDhanIndividualStock(stockData) {
+    // const start = new Date('2024-03-07T09:10:00+05:30');
+    const start = new Date();
+    const end = new Date(start);
+    end.setMinutes(start.getMinutes() + 20);
+    // const stockId = 3405;
+    const stockId = stockData.id;
+
+    const body = {
+      EXCH: 'NSE',
+      SEG: 'E',
+      INST: 'EQUITY',
+      SEC_ID: stockId,
+      START: Math.round(start.getTime() / 1000),
+      END: Math.round(end.getTime() / 1000),
+      INTERVAL: '15S',
+    };
+
+    const url = DHAN_API_GET_DATA_S;
+    const headers = { 'Content-Type': 'application/json' };
+    const res = await this.apiService.post(url, body, headers);
+
+    const res_data = res?.data;
+    const open = res_data?.o;
+    const high = res_data?.h;
+    const low = res_data?.l;
+    const close = res_data?.c;
+    const time = res_data?.t;
+    if (!open || !open?.length) return;
+    const bulkList = [];
+    for (let index = 0; index < open.length; index++) {
+      try {
+        const date = new Date(time[index] * 1000);
+        const creationData = {
+          invest: 0,
+          risk: 0,
+          stockId: stockId,
+          sessionTime: date,
+          open: open[index],
+          close: close[index],
+          closingDiff: parseFloat(
+            (((close[index] - open[index]) * 100) / open[index]).toFixed(2),
+          ),
+          high: high[index],
+          low: low[index],
+          volatileDiff: parseFloat(
+            (((high[index] - low[index]) * 100) / open[index]).toFixed(2),
+          ),
+          uniqueId: stockId + '_' + date.getTime(),
+        };
+        // Prediction to buy stock
+        const targetList = bulkList;
+        targetList.push(creationData);
+        const { invest, risk } = this.predictRisk(targetList);
+        creationData.invest = invest;
+        creationData.risk = risk;
+
+        bulkList.push(creationData);
+      } catch (error) {}
+    }
+
+    await this.dbManager.bulkInsert(StockPricing, bulkList);
+    await this.dbManager.updateOne(
+      StockList,
+      { syncedOn: new Date() },
+      stockData.id,
     );
   }
 
