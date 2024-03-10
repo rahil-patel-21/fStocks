@@ -163,6 +163,11 @@ export class LiveServiceV1 {
     }
 
     await this.dbManager.bulkInsert(StockPricing, bulkList);
+    await this.dbManager.updateOne(
+      StockList,
+      { syncedOn: new Date() },
+      stockData.id,
+    );
   }
 
   async syncLatestPrice(reqData) {
