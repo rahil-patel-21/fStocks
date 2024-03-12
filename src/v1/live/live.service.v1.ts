@@ -55,7 +55,9 @@ export class LiveServiceV1 {
 
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
-      await this.syncDhanIndividualStock(targetList[index], reqData);
+      try {
+        await this.syncDhanIndividualStock(targetList[index], reqData);
+      } catch (error) {}
     }
   }
 
@@ -104,6 +106,7 @@ export class LiveServiceV1 {
   async syncDhanIndividualStock(stockData, reqData) {
     if (!reqData.targetDate)
       reqData.targetDate = new Date().toJSON().substring(0, 10);
+
     const targetDate = new Date(reqData.targetDate);
     const startDate = new Date(targetDate);
     // Set to stock market opening time
