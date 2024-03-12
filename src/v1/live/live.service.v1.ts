@@ -137,6 +137,7 @@ export class LiveServiceV1 {
     const headers = { 'Content-Type': 'application/json' };
     // Hit -> API
     const response = await this.apiService.post(url, body, headers);
+    console.log({ response });
 
     const res_data = response?.data;
     const open = res_data?.o;
