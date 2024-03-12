@@ -2,9 +2,9 @@
 import * as express from 'express';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
+import { Env } from './constants/env.config';
 
 async function bootstrap() {
-  console.log('OKAY');
   const app = await NestFactory.create(AppModule, {
     httpsOptions: null,
     cors: true,
@@ -13,7 +13,7 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '100mb', extended: true }));
   app.enableCors();
 
-  await app.listen(3000);
+  await app.listen(Env.server.port ?? 3000);
 }
 
 bootstrap();

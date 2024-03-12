@@ -12,4 +12,13 @@ export const Env = {
     password: process.env.DB_PASSWORD,
     ssl: process.env.DB_SSL,
   },
+
+  server: {
+    port: process.env.SERVER_PORT,
+  },
+
+  telegram: {
+    devIds: process.env.TELEGRAM_DEV_IDS?.split(',') ?? [],
+    botToken: process.env.TELEGRAM_BOT_TOKEN,
+  },
 };
