@@ -7,10 +7,16 @@ import { DhanController } from './dhan/dhan.controller';
 import { YahooController } from './yahoo/yahoo.controller';
 import { TelegramService } from './telegram/telegram.service';
 import { AngleOneService } from './angelOne/angle.one.service';
+import { TelegramController } from './telegram/telegram.controller';
 import { AngleOneController } from './angelOne/angle.one.controller';
 
 @Module({
-  controllers: [AngleOneController, DhanController, YahooController],
+  controllers: [
+    AngleOneController,
+    DhanController,
+    TelegramController,
+    YahooController,
+  ],
   exports: [TelegramService],
   providers: [
     AngleOneService,

@@ -13,16 +13,19 @@ export class TelegramService implements OnModuleInit {
       if (!Env.telegram.botToken) return;
 
       chatBot = new TelegramBot(Env.telegram.botToken, { polling: true });
-    } catch (error) {}
+      console.log('TELEGRAM BOT IS READY TO ROCK !');
+    } catch (error) {
+      console.log({ error });
+    }
   }
 
   async sendMessage(content?: string) {
+    console.log({ chatBot });
     if (!chatBot) return {};
 
     const queue = [];
     for (let index = 0; index < Env.telegram.devIds.length; index++) {
       try {
-        console.log(Env.telegram.devIds);
         queue.push(
           chatBot.sendMessage(
             Env.telegram.devIds[index],
