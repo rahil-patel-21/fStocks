@@ -5,6 +5,8 @@ import { NestFactory } from '@nestjs/core';
 import { Env } from './constants/env.config';
 
 async function bootstrap() {
+  process.env.TZ = 'Asia/Kolkata';
+
   const app = await NestFactory.create(AppModule, {
     httpsOptions: null,
     cors: true,
@@ -14,6 +16,7 @@ async function bootstrap() {
   app.enableCors();
 
   await app.listen(Env.server.port ?? 3000);
+  console.log('App started running at -> ', new Date().toString());
 }
 
 bootstrap();

@@ -4,6 +4,7 @@ import { V1Module } from './v1/v1.module';
 import { RouterModule } from 'nest-router';
 import { AppService } from './app.service';
 import { AppController } from './app.controller';
+import { ScheduleModule } from '@nestjs/schedule';
 import { UtilsModule } from './utils/utils.module';
 import { SharedModule } from './shared/shared.module';
 import { DatabaseModule } from './database/database.module';
@@ -22,6 +23,7 @@ export const routes = [
 
 @Module({
   imports: [
+    ScheduleModule.forRoot(),
     DatabaseModule,
     RouterModule.forRoutes(routes),
     SharedModule,

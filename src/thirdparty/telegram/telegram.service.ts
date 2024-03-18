@@ -20,7 +20,6 @@ export class TelegramService implements OnModuleInit {
   }
 
   async sendMessage(content?: string) {
-    console.log({ chatBot });
     if (!chatBot) return {};
 
     const queue = [];
