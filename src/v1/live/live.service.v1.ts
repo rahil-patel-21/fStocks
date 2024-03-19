@@ -52,12 +52,15 @@ export class LiveServiceV1 {
       ['dhanId', 'id', 'name'],
       stockOptions,
     );
+    console.log(targetList);
 
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
       try {
         await this.syncDhanIndividualStock(targetList[index], reqData);
-      } catch (error) {}
+      } catch (error) {
+        console.log(error);
+      }
     }
   }
 
