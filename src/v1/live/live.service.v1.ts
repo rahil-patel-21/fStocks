@@ -140,6 +140,7 @@ export class LiveServiceV1 {
     const response = await this.apiService.post(url, body, headers);
 
     const res_data = response?.data;
+    console.log(res_data);
     const open = res_data?.o;
     const high = res_data?.h;
     const low = res_data?.l;
