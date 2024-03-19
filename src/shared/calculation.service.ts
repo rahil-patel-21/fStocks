@@ -47,18 +47,21 @@ export class CalculationSharedService {
 
       // Last record
       if (index === targetList.length - 1) {
-        // Market is about to close (Auto square off prevention)
+        // Market is about to open or close (Market rush prevention & Auto square off prevention)
         const currentHours = targetData.sessionTime.getHours();
         let isClosingDate = false;
-        if (currentHours >= 14) {
+        let isOpeningGate = false;
+        if (currentHours >= 14 || currentHours == 9) {
           if (currentHours >= 15) isClosingDate = true;
           else {
             const currentMinutes = targetData.sessionTime.getMinutes();
-            if (currentMinutes >= 30) isClosingDate = true;
+            if (currentMinutes >= 30 && currentHours != 9) isClosingDate = true;
+            else if (currentHours === 9 && currentMinutes < 20)
+              isOpeningGate = true;
           }
         }
 
-        if (!isClosingDate) {
+        if (!isClosingDate && !isOpeningGate) {
           // Last 2 mins in gaining mode
           if (last2MinsClosingDiff > 0.05 && last2MinsClosingDiff < 0.1)
             risk -= 20;
@@ -75,15 +78,27 @@ export class CalculationSharedService {
             else risk -= 30;
           }
 
-          if (openDiff < 0.25) risk = 100;
-          else if (openDiff >= 0.25 && openDiff < 2.5) risk += 15;
+          if (openDiff < 0.5) risk = 100;
+          else if (openDiff >= 0.5 && openDiff < 2.5) risk += 15;
           else if (openDiff >= 2.5 && openDiff < 5) risk += 5;
           else if (openDiff >= 5 && openDiff < 7.5) risk -= 5;
           else if (openDiff >= 7.5 && openDiff <= 10) risk -= 10;
           // Too late to buy
+          else if (openDiff > 15) {
+            if (risk < 0) risk = 0;
+            risk += 40;
+          }
+          // Late to buy
           else if (openDiff > 10) {
             if (risk < 0) risk = 0;
-            risk += 20;
+            risk += 30;
+          }
+
+          // Last lap Gaining mode
+          if (closingDiff > 0.25 && closingDiff < 1) {
+            risk -= 30;
+            if (closingDiff > 0.4) risk -= 20;
+            if (openDiff > 5 && openDiff < 15) risk -= 20;
           }
         } else risk = 100;
       }

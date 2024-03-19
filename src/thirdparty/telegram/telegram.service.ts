@@ -20,22 +20,27 @@ export class TelegramService implements OnModuleInit {
   }
 
   async sendMessage(content?: string) {
-    if (!chatBot) return {};
+    try {
+      console.log(content);
+      if (!chatBot) return {};
 
-    const queue = [];
-    for (let index = 0; index < Env.telegram.devIds.length; index++) {
-      try {
-        queue.push(
-          chatBot.sendMessage(
-            Env.telegram.devIds[index],
-            content ?? `This is a test message`,
-          ),
-        );
-      } catch (error) {
-        console.log({ error });
+      const queue = [];
+      for (let index = 0; index < Env.telegram.devIds.length; index++) {
+        try {
+          queue.push(
+            chatBot.sendMessage(
+              Env.telegram.devIds[index],
+              content ?? `This is a test message`,
+            ),
+          );
+        } catch (error) {
+          console.log({ error });
+        }
       }
+      await Promise.all(queue);
+      return {};
+    } catch (error) {
+      console.log({ error });
     }
-    await Promise.all(queue);
-    return {};
   }
 }

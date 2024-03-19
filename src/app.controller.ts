@@ -12,9 +12,9 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/15 * * * * *')
-  handleCron() {
-    console.log('Cron triggered on -> ', new Date().toString());
-    // Your cron job logic goes here
-  }
+  // @Cron('*/15 * * * * *')
+  // handleCron() {
+  //   //  console.log('Cron triggered on -> ', new Date().toString());
+  //   // Your cron job logic goes here
+  // }
 }

@@ -119,6 +119,7 @@ export class LiveServiceV1 {
     endDate.setMinutes(endDate.getMinutes() - 30);
     endDate.setHours(endDate.getHours() + 15);
     const maxTime = reqData.maxTime;
+    const alert = reqData.alert === true;
 
     // Preparation -> API
     const body = {
@@ -190,12 +191,13 @@ export class LiveServiceV1 {
             creationData.sessionTime,
             today,
           );
-          if (creationData.risk <= 25 && diffInSecs < 30) {
+          if (creationData.risk <= 25 && alert) {
             const message = `
             Alert !
             ${stockData.name}
             Risk - ${creationData.risk}%
             Value - ${creationData.close}
+            Time - ${creationData.sessionTime.toString()}
             Keep an eye !`;
             this.telegram.sendMessage(message);
           }
@@ -208,6 +210,7 @@ export class LiveServiceV1 {
     }
 
     await this.dbManager.bulkInsert(StockPricing, bulkList);
+    await this.funService.delay(this.funService.generateRandomValue(25, 75));
   }
 
   async syncLatestPrice(reqData) {
