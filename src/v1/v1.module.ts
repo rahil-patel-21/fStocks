@@ -12,6 +12,7 @@ import { ThirdPartyModule } from 'src/thirdparty/thirdparty.module';
 @Module({
   imports: [DatabaseModule, SharedModule, ThirdPartyModule, UtilsModule],
   controllers: [LiveControllerV1, ManualControllerV1],
+  exports: [LiveServiceV1],
   providers: [LiveServiceV1, ManualServiceV1],
 })
 export class V1Module {}
