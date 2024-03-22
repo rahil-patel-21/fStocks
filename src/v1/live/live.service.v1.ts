@@ -193,8 +193,7 @@ export class LiveServiceV1 {
             creationData.sessionTime,
             today,
           );
-          console.log(diffInSecs);
-          if (creationData.risk <= 25 && alert) {
+          if (creationData.risk <= 25 && alert && diffInSecs <= 60) {
             const message = `
             Alert !
             ${stockData.name}
