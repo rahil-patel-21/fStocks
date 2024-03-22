@@ -52,7 +52,6 @@ export class LiveServiceV1 {
       ['dhanId', 'id', 'name'],
       stockOptions,
     );
-    console.log(targetList);
 
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
@@ -143,7 +142,6 @@ export class LiveServiceV1 {
     const response = await this.apiService.post(url, body, headers);
 
     const res_data = response?.data;
-    console.log(res_data);
     const open = res_data?.o;
     const high = res_data?.h;
     const low = res_data?.l;
@@ -195,6 +193,7 @@ export class LiveServiceV1 {
             creationData.sessionTime,
             today,
           );
+          console.log(diffInSecs);
           if (creationData.risk <= 25 && alert) {
             const message = `
             Alert !
