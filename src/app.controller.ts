@@ -16,7 +16,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/10 * * * * *')
+  @Cron('*/12 * * * * *')
   handleCron() {
     this.liveService.init({ alert: true, stockId: -1 });
     console.log('Cron triggered on -> ', new Date().toString());
