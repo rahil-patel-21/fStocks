@@ -56,13 +56,6 @@ export class StockPricing extends Model<StockPricing> {
   risk: number;
 
   @Column({
-    allowNull: true,
-    comment: 'Prediction to invest',
-    type: DataType.DOUBLE,
-  })
-  invest: number;
-
-  @Column({
     allowNull: false,
     comment:
       'Difference of open and close with respective of opening market value',

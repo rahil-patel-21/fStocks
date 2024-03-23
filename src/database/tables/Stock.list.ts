@@ -30,17 +30,10 @@ export class StockList extends Model<StockList> {
 
   @Column({
     allowNull: false,
-    defaultValue: false,
+    defaultValue: true,
     type: DataType.BOOLEAN,
   })
   isActive: boolean;
-
-  @Column({
-    allowNull: true,
-    defaultValue: 0,
-    type: DataType.DOUBLE,
-  })
-  invest: Date;
 
   @Column({
     allowNull: true,
