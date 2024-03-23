@@ -12,7 +12,7 @@ export class TelegramService implements OnModuleInit {
       if (chatBot) return;
       if (!Env.telegram.botToken) return;
 
-      chatBot = new TelegramBot(Env.telegram.botToken, { polling: true });
+      chatBot = new TelegramBot(Env.telegram.botToken, { polling: false });
       console.log('TELEGRAM BOT IS READY TO ROCK !');
     } catch (error) {
       console.log({ error });
