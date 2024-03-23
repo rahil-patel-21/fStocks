@@ -15,8 +15,11 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '100mb', extended: true }));
   app.enableCors();
 
-  await app.listen(Env.server.port ?? 3000);
-  console.log('App started running at -> ', new Date().toString());
+  await app.listen(Env.server.port);
+  console.log(
+    `App started running on port ${Env.server.port} at -> `,
+    new Date().toString(),
+  );
 }
 
 bootstrap();

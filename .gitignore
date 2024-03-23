@@ -38,3 +38,4 @@ lerna-debug.log*
 targetData.json
 
 *.sh
+docker-compose.yml
