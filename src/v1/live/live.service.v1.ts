@@ -140,7 +140,6 @@ export class LiveServiceV1 {
     const headers = { 'Content-Type': 'application/json' };
     // Hit -> API
     const response = await this.apiService.post(url, body, headers);
-
     const res_data = response?.data;
     const open = res_data?.o;
     const high = res_data?.h;
@@ -175,9 +174,12 @@ export class LiveServiceV1 {
         const targetList = bulkList;
         targetList.push(creationData);
 
+        creationData.risk = this.calculation.predictRisk(
+          targetList,
+          maxTime && creationData.sessionTime.toString().includes(maxTime),
+        );
         if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
-          creationData.risk = this.calculation.predictRisk(targetList);
-          if (creationData.risk <= 25) {
+          if (creationData.risk <= 25 && alert) {
             const message = `
             Alert ! 
             ${stockData.name}  
@@ -188,7 +190,6 @@ export class LiveServiceV1 {
           }
           break;
         } else if (!maxTime) {
-          creationData.risk = this.calculation.predictRisk(targetList);
           const diffInSecs = this.dateService.difference(
             creationData.sessionTime,
             today,
@@ -212,7 +213,7 @@ export class LiveServiceV1 {
     }
 
     await this.dbManager.bulkInsert(StockPricing, bulkList);
-    await this.funService.delay(this.funService.generateRandomValue(25, 75));
+    await this.funService.delay(this.funService.generateRandomValue(50, 100));
   }
 
   async syncLatestPrice(reqData) {

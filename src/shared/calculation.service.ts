@@ -3,7 +3,7 @@ import { Injectable } from '@nestjs/common';
 
 @Injectable()
 export class CalculationSharedService {
-  predictRisk(rawList) {
+  predictRisk(rawList, canLog = false) {
     let targetList = [...rawList];
     targetList = [...new Set(targetList)];
 
@@ -14,6 +14,7 @@ export class CalculationSharedService {
 
     const marketOpen = targetList[0].open;
     let last2MinsClosingDiff = 0;
+    const lastLot = [];
     for (let index = 0; index < targetList.length; index++) {
       const targetData = targetList[index];
       const sessionOpen = targetData.open;
@@ -43,6 +44,8 @@ export class CalculationSharedService {
         else if (closingDiff <= 0 && closingDiff >= -1) risk += 5;
         else if (closingDiff <= -1 && closingDiff <= -2.5) risk += 7.5;
         else if (closingDiff < -2.5) risk += 15;
+
+        lastLot.push(targetData);
       }
 
       // Last record
@@ -102,6 +105,24 @@ export class CalculationSharedService {
           }
         } else risk = 100;
       }
+    }
+
+    // Avoid sell zone
+    let lowRiskCount = 0;
+    if (risk <= 20) {
+      for (let index = 0; index < lastLot.length; index++) {
+        try {
+          const lotData = lastLot[index];
+
+          if (lotData.risk != null && lotData.risk != undefined) {
+            if (lotData.risk <= 30) lowRiskCount++;
+            else if (lotData.risk === 51) risk += 25;
+          }
+        } catch (error) {}
+      }
+      const lowRatio = (lowRiskCount * 100) / lastLot.length;
+      // 51 indicates that previous value might on peak
+      if (lowRatio >= 50) risk = 51;
     }
 
     if (risk < 0) risk = 0;
