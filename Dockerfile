@@ -1,5 +1,7 @@
 FROM --platform=linux/amd64 ubuntu:20.04
 
+ENV TZ=Asia/Kolkata
+
 RUN apt-get update && apt-get install -y curl
 
 RUN curl -sL https://deb.nodesource.com/setup_16.x | bash - \

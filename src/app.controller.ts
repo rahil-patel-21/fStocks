@@ -1,5 +1,5 @@
 // Imports
-// import { Cron } from '@nestjs/schedule';
+import { Cron } from '@nestjs/schedule';
 import { AppService } from './app.service';
 import { Controller, Get } from '@nestjs/common';
 import { LiveServiceV1 } from './v1/live/live.service.v1';
@@ -16,9 +16,10 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  // @Cron('*/12 * * * * *')
-  // handleCron() {
-  //   this.liveService.init({ alert: true, stockId: -1 });
-  //   console.log('Cron triggered on -> ', new Date().toString());
-  // }
+  @Cron('*/12 * * * * *')
+  handleCron() {
+    console.log('HERE', new Date().toString());
+    // this.liveService.init({ alert: true, stockId: -1 });
+    console.log('Cron triggered on -> ', new Date().toString());
+  }
 }
