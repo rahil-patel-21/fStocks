@@ -16,10 +16,23 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/12 * * * * *')
+  @Cron('*/14 * * * * *')
   handleCron() {
-    console.log('HERE', new Date().toString());
+    const today = new Date();
+    const hours = today.getHours();
+    const minutes = today.getMinutes();
+
+    let isMarketTime = false;
+    if (hours >= 9 && hours <= 15) {
+      if (hours == 9) {
+        if (minutes >= 15) isMarketTime = true;
+      } else if (hours == 15) {
+        if (minutes <= 30) isMarketTime = true;
+      } else isMarketTime = true;
+    }
+    if (isMarketTime) {
+      console.log('MARKET IS OPEN');
+    }
     // this.liveService.init({ alert: true, stockId: -1 });
-    console.log('Cron triggered on -> ', new Date().toString());
   }
 }
