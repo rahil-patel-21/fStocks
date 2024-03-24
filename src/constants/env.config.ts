@@ -19,6 +19,6 @@ export const Env = {
 
   telegram: {
     devIds: process.env.TELEGRAM_DEV_IDS?.split(',') ?? [],
-    botToken: process.env.TELEGRAM_BOT_TOKEN,
+    botTokens: process.env.TELEGRAM_BOT_TOKENS?.split(',') ?? [],
   },
 };

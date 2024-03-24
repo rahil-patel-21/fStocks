@@ -1,46 +1,34 @@
 // Imports
+import { Injectable } from '@nestjs/common';
 import { Env } from 'src/constants/env.config';
-import * as TelegramBot from 'node-telegram-bot-api';
-import { Injectable, OnModuleInit } from '@nestjs/common';
-
-let chatBot;
+import { APIService } from 'src/utils/api.service';
 
 @Injectable()
-export class TelegramService implements OnModuleInit {
-  onModuleInit() {
-    try {
-      if (chatBot) return;
-      if (!Env.telegram.botToken) return;
+export class TelegramService {
+  constructor(private readonly api: APIService) {}
 
-      chatBot = new TelegramBot(Env.telegram.botToken, { polling: false });
-      console.log('TELEGRAM BOT IS READY TO ROCK !');
-    } catch (error) {
-      console.log({ error });
-    }
-  }
+  async sendMessage(text?: string) {
+    const randomIndex = Math.floor(
+      Math.random() * Env.telegram.botTokens.length,
+    );
+    const token = Env.telegram.botTokens[randomIndex];
 
-  async sendMessage(content?: string) {
-    try {
-      console.log(content);
-      if (!chatBot) return {};
+    for (let index = 0; index < Env.telegram.devIds.length; index++) {
+      try {
+        const payload = {
+          chat_id: Env.telegram.devIds[index],
+          text,
+        };
 
-      const queue = [];
-      for (let index = 0; index < Env.telegram.devIds.length; index++) {
-        try {
-          queue.push(
-            chatBot.sendMessage(
-              Env.telegram.devIds[index],
-              content ?? `This is a test message`,
-            ),
-          );
-        } catch (error) {
-          console.log({ error });
-        }
+        this.api.post(
+          `https://api.telegram.org/bot${token}/sendMessage`,
+          payload,
+        );
+      } catch (error) {
+        console.log({ error });
       }
-      await Promise.all(queue);
-      return {};
-    } catch (error) {
-      console.log({ error });
     }
+
+    return {};
   }
 }
