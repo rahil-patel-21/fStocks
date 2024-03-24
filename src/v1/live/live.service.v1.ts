@@ -78,6 +78,7 @@ export class LiveServiceV1 {
     endDate.setHours(endDate.getHours() + 15);
     const maxTime = reqData.maxTime;
     const alert = reqData.alert === true;
+    const isRealTime = reqData.realTime ?? true;
 
     // Preparation -> API
     const body = {
@@ -134,7 +135,7 @@ export class LiveServiceV1 {
           maxTime && creationData.sessionTime.toString().includes(maxTime),
         );
         if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
-          if (creationData.risk <= 25 && alert) {
+          if (creationData.risk <= 20 && alert) {
             const message = `
             Alert ! 
             ${stockData.name}  
@@ -149,7 +150,11 @@ export class LiveServiceV1 {
             creationData.sessionTime,
             today,
           );
-          if (creationData.risk <= 25 && alert && diffInSecs <= 30) {
+          if (
+            creationData.risk <= 20 &&
+            alert &&
+            (diffInSecs <= 30 || !isRealTime)
+          ) {
             const message = `
             Alert !
             ${stockData.name}
