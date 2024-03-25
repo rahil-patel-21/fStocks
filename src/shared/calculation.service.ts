@@ -107,7 +107,7 @@ export class CalculationSharedService {
       }
     }
 
-    // Avoid sell zone
+    // Prevention -> Avoid sell zone
     let lowRiskCount = 0;
     if (risk <= 20) {
       for (let index = 0; index < lastLot.length; index++) {
@@ -123,10 +123,38 @@ export class CalculationSharedService {
       const lowRatio = (lowRiskCount * 100) / lastLot.length;
       // 51 indicates that previous value might on peak
       if (lowRatio >= 50) risk = 51;
+
+      // Prevention -> Check high value in last 5 mins
+      if (risk <= 20) {
+        const lastData = targetList[targetList.length - 1];
+        const lastTime = lastData.sessionTime;
+        const minTime = new Date(lastTime);
+        minTime.setMinutes(minTime.getMinutes() - 5);
+        const last5minsLot = targetList.filter(
+          (el) =>
+            el.sessionTime.getTime() >= minTime.getTime() &&
+            el.sessionTime.getTime() < lastTime.getTime(),
+        );
+        if (last5minsLot.length > 15) {
+          let maxCloseValue = 0;
+          last5minsLot.forEach((el) => {
+            if (el.close > maxCloseValue) maxCloseValue = el.close;
+          });
+          const diffIn5Mins = (lastData.close * 100) / maxCloseValue - 100;
+          if (canLog) console.log({ marketOpen, diffIn5Mins });
+          // Stock price is in downfall
+          if (diffIn5Mins <= 0.25) {
+            if (risk < 0) risk = 0;
+            risk += 50;
+          }
+        }
+      }
     }
 
     if (risk < 0) risk = 0;
     else if (risk > 100) risk = 100;
+
+    if (canLog) console.log({ risk });
 
     return risk;
   }
