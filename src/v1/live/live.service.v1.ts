@@ -137,11 +137,10 @@ export class LiveServiceV1 {
         if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
           if (creationData.risk <= 20 && alert) {
             const message = `
-            Alert ! 
-            ${stockData.name}  
-            Risk - ${creationData.risk}%
+            ${stockData.name}
+            Risk - ${creationData.risk}% 
             Value - ${creationData.close}
-            Keep an eye !`;
+            Time - ${creationData.sessionTime.toString()}`;
             this.telegram.sendMessage(message);
           }
           break;
@@ -156,12 +155,10 @@ export class LiveServiceV1 {
             (diffInSecs <= 30 || !isRealTime)
           ) {
             const message = `
-            Alert !
             ${stockData.name}
-            Risk - ${creationData.risk}%
+            Risk - ${creationData.risk}% 
             Value - ${creationData.close}
-            Time - ${creationData.sessionTime.toString()}
-            Keep an eye !`;
+            Time - ${creationData.sessionTime.toString()}`;
             this.telegram.sendMessage(message);
           }
         }
