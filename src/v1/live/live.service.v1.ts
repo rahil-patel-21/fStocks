@@ -135,7 +135,7 @@ export class LiveServiceV1 {
           maxTime && creationData.sessionTime.toString().includes(maxTime),
         );
         if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
-          if (creationData.risk <= 20 && alert) {
+          if (creationData.risk == 0 && alert) {
             const message = `
             ${stockData.name}
             Risk - ${creationData.risk}% 
@@ -150,7 +150,7 @@ export class LiveServiceV1 {
             today,
           );
           if (
-            creationData.risk <= 20 &&
+            creationData.risk == 0 &&
             alert &&
             (diffInSecs <= 30 || !isRealTime)
           ) {
