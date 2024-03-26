@@ -31,8 +31,7 @@ export class AppController {
       } else isMarketTime = true;
     }
     if (isMarketTime) {
-      console.log('MARKET IS OPEN');
+      this.liveService.init({ alert: true, stockId: -1 });
     }
-    // this.liveService.init({ alert: true, stockId: -1 });
   }
 }
