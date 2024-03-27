@@ -16,7 +16,7 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/14 * * * * *')
+  @Cron('*/4 * * * * *')
   handleCron() {
     const today = new Date();
     const hours = today.getHours();
