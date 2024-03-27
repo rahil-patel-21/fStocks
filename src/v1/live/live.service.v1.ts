@@ -53,6 +53,7 @@ export class LiveServiceV1 {
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
       try {
+        console.log({ index });
         await this.syncDhanIndividualStock(targetList[index], reqData);
       } catch (error) {
         console.log(error);
@@ -68,14 +69,12 @@ export class LiveServiceV1 {
     const targetDate = new Date(reqData.targetDate);
     const startDate = new Date(targetDate);
     // Set to stock market opening time
-    startDate.setHours(startDate.getHours() - 5);
-    startDate.setMinutes(startDate.getMinutes() - 30);
-    startDate.setHours(startDate.getHours() + 9);
+    startDate.setHours(9);
+    startDate.setMinutes(0);
     const endDate = new Date(targetDate);
     // Set to stock market closing time
-    endDate.setHours(endDate.getHours() - 5);
-    endDate.setMinutes(endDate.getMinutes() - 30);
-    endDate.setHours(endDate.getHours() + 15);
+    endDate.setHours(15);
+    endDate.setMinutes(30);
     const maxTime = reqData.maxTime;
     const alert = reqData.alert === true;
     const isRealTime = reqData.realTime ?? true;
@@ -90,7 +89,7 @@ export class LiveServiceV1 {
       START_TIME: startDate.toString(),
       END: Math.round(endDate.getTime() / 1000),
       END_TIME: endDate.toString(),
-      INTERVAL: '15S',
+      INTERVAL: '5S',
     };
 
     const url = DHAN_API_GET_DATA_S;
@@ -111,7 +110,7 @@ export class LiveServiceV1 {
       try {
         const date = new Date(time[index] * 1000);
         const creationData = {
-          risk: 0,
+          risk: 100,
           stockId: stockData.id,
           sessionTime: date,
           open: open[index],
@@ -130,11 +129,8 @@ export class LiveServiceV1 {
         const targetList = bulkList;
         targetList.push(creationData);
 
-        creationData.risk = this.calculation.predictRisk(
-          targetList,
-          maxTime && creationData.sessionTime.toString().includes(maxTime),
-        );
         if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
+          creationData.risk = this.calculation.predictRiskV2(targetList);
           if (creationData.risk == 0 && alert) {
             const message = `
             ${stockData.name}
@@ -145,6 +141,7 @@ export class LiveServiceV1 {
           }
           break;
         } else if (!maxTime) {
+          creationData.risk = this.calculation.predictRiskV2(targetList);
           const diffInSecs = this.dateService.difference(
             creationData.sessionTime,
             today,
@@ -152,7 +149,7 @@ export class LiveServiceV1 {
           if (
             creationData.risk == 0 &&
             alert &&
-            (diffInSecs <= 30 || !isRealTime)
+            (diffInSecs <= 10 || !isRealTime)
           ) {
             const message = `
             ${stockData.name}
@@ -169,7 +166,6 @@ export class LiveServiceV1 {
       }
     }
 
-    await this.dbManager.bulkInsert(StockPricing, bulkList);
-    await this.funService.delay(this.funService.generateRandomValue(50, 100));
+    this.dbManager.bulkInsert(StockPricing, [...new Set(bulkList)]);
   }
 }
