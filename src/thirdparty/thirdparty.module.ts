@@ -9,11 +9,14 @@ import { TelegramService } from './telegram/telegram.service';
 import { AngleOneService } from './angelOne/angle.one.service';
 import { TelegramController } from './telegram/telegram.controller';
 import { AngleOneController } from './angelOne/angle.one.controller';
+import { IndMoneyController } from './indmoney/indmoney.controller';
+import { IndMoneyService } from './indmoney/indmoney.service';
 
 @Module({
   controllers: [
     AngleOneController,
     DhanController,
+    IndMoneyController,
     TelegramController,
     YahooController,
   ],
@@ -22,6 +25,7 @@ import { AngleOneController } from './angelOne/angle.one.controller';
     AngleOneService,
     APIService,
     DhanService,
+    IndMoneyService,
     TelegramService,
     YahooService,
   ],

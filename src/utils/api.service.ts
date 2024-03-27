@@ -43,9 +43,7 @@ export class APIService {
       const result = response.data;
       return result;
     } catch (error) {
-      try {
-        // if (isSendData) return kUnproccesableData(error?.response?.data);
-      } catch (error) {}
+      return error?.response?.data;
     }
   }
 }
