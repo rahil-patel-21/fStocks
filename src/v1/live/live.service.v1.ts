@@ -44,16 +44,16 @@ export class LiveServiceV1 {
     };
     if (stockId == -1) delete stockOptions.where.id;
     // Hit -> Query
-    const targetList = await this.dbManager.getAll(
+    let targetList = await this.dbManager.getAll(
       StockList,
       ['dhanId', 'id', 'name'],
       stockOptions,
     );
+    targetList = this.funService.shuffleArray(targetList);
 
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
       try {
-        console.log({ index });
         await this.syncDhanIndividualStock(targetList[index], reqData);
       } catch (error) {
         console.log(error);
@@ -132,11 +132,11 @@ export class LiveServiceV1 {
         if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
           creationData.risk = this.calculation.predictRiskV2(targetList);
           if (creationData.risk == 0 && alert) {
-            const message = `
-            ${stockData.name}
-            Risk - ${creationData.risk}% 
-            Value - ${creationData.close}
-            Time - ${creationData.sessionTime.toString()}`;
+            const message = `${stockData.name} \nValue - ${
+              creationData.close
+            } \nTime - ${creationData.sessionTime
+              .toString()
+              .replace(' GMT+0530 (India Standard Time)', '')}`;
             this.telegram.sendMessage(message);
           }
           break;
@@ -151,11 +151,11 @@ export class LiveServiceV1 {
             alert &&
             (diffInSecs <= 10 || !isRealTime)
           ) {
-            const message = `
-            ${stockData.name}
-            Risk - ${creationData.risk}% 
-            Value - ${creationData.close}
-            Time - ${creationData.sessionTime.toString()}`;
+            const message = `${stockData.name} \nValue - ${
+              creationData.close
+            } \nTime - ${creationData.sessionTime
+              .toString()
+              .replace(' GMT+0530 (India Standard Time)', '')}`;
             this.telegram.sendMessage(message);
           }
         }
