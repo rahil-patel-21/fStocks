@@ -39,8 +39,8 @@ export class LiveServiceV1 {
     // Market closed
     else expiredTime.setMinutes(expiredTime.getMinutes() - 30);
     const stockOptions = {
-      limit: 60,
-      where: { id: stockId },
+      limit: 50,
+      where: { id: stockId, isActive: true },
     };
     if (stockId == -1) delete stockOptions.where.id;
     // Hit -> Query
@@ -166,6 +166,6 @@ export class LiveServiceV1 {
       }
     }
 
-    this.dbManager.bulkInsert(StockPricing, [...new Set(bulkList)]);
+    // this.dbManager.bulkInsert(StockPricing, [...new Set(bulkList)]);
   }
 }

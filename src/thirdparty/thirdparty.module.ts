@@ -20,7 +20,7 @@ import { IndMoneyService } from './indmoney/indmoney.service';
     TelegramController,
     YahooController,
   ],
-  exports: [TelegramService],
+  exports: [IndMoneyService, TelegramService],
   providers: [
     AngleOneService,
     APIService,

@@ -1,6 +1,6 @@
 // Imports
 import { MarketService } from './market.service';
-import { Controller, Get, Query } from '@nestjs/common';
+import { Controller, Get, Post, Query } from '@nestjs/common';
 
 @Controller('market')
 export class MarketController {
@@ -9,5 +9,10 @@ export class MarketController {
   @Get('list')
   async funList(@Query() query) {
     return await this.service.list(query);
+  }
+
+  @Post('syncGainers')
+  async funSyncGainers() {
+    this.service.syncGainers();
   }
 }
