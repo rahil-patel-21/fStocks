@@ -37,13 +37,13 @@ export class AppController {
     }
   }
 
-  @Cron('*/30 * * * * *')
-  handleCronForGainers() {
-    const today = new Date();
-    const hours = today.getHours();
+  // @Cron('*/30 * * * * *')
+  // handleCronForGainers() {
+  //   const today = new Date();
+  //   const hours = today.getHours();
 
-    let isMarketTime = false;
-    if (hours >= 9 && hours <= 15) isMarketTime = true;
-    if (isMarketTime) this.marketService.syncGainers();
-  }
+  //   let isMarketTime = false;
+  //   if (hours >= 9 && hours <= 15) isMarketTime = true;
+  //   if (isMarketTime) this.marketService.syncGainers();
+  // }
 }
