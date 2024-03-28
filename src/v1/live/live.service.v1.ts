@@ -54,6 +54,7 @@ export class LiveServiceV1 {
     // Iterate
     for (let index = 0; index < targetList.length; index++) {
       try {
+        console.log({ index, total: targetList.length });
         await this.syncDhanIndividualStock(targetList[index], reqData);
       } catch (error) {
         console.log(error);

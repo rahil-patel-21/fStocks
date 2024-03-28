@@ -21,7 +21,7 @@ import { ThirdPartyModule } from 'src/thirdparty/thirdparty.module';
     ManualControllerV1,
     TestController,
   ],
-  exports: [LiveServiceV1],
+  exports: [LiveServiceV1, MarketService],
   providers: [LiveServiceV1, MarketService, ManualServiceV1, TestService],
 })
 export class V1Module {}
