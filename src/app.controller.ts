@@ -18,32 +18,32 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  // @Cron('*/4 * * * * *')
-  // handleCron() {
-  //   const today = new Date();
-  //   const hours = today.getHours();
-  //   const minutes = today.getMinutes();
+  @Cron('*/4 * * * * *')
+  handleCron() {
+    const today = new Date();
+    const hours = today.getHours();
+    const minutes = today.getMinutes();
 
-  //   let isMarketTime = false;
-  //   if (hours >= 9 && hours <= 15) {
-  //     if (hours == 9) {
-  //       if (minutes >= 15) isMarketTime = true;
-  //     } else if (hours == 15) {
-  //       if (minutes <= 30) isMarketTime = true;
-  //     } else isMarketTime = true;
-  //   }
-  //   if (isMarketTime) {
-  //     this.liveService.init({ alert: true, stockId: -1 });
-  //   }
-  // }
+    let isMarketTime = false;
+    if (hours >= 9 && hours <= 15) {
+      if (hours == 9) {
+        if (minutes >= 15) isMarketTime = true;
+      } else if (hours == 15) {
+        if (minutes <= 30) isMarketTime = true;
+      } else isMarketTime = true;
+    }
+    if (isMarketTime) {
+      this.liveService.init({ alert: true, stockId: -1 });
+    }
+  }
 
-  // @Cron('*/30 * * * * *')
-  // handleCronForGainers() {
-  //   const today = new Date();
-  //   const hours = today.getHours();
+  @Cron('*/30 * * * * *')
+  handleCronForGainers() {
+    const today = new Date();
+    const hours = today.getHours();
 
-  //   let isMarketTime = false;
-  //   if (hours >= 9 && hours <= 15) isMarketTime = true;
-  //   if (isMarketTime) this.marketService.syncGainers();
-  // }
+    let isMarketTime = false;
+    if (hours >= 9 && hours <= 15) isMarketTime = true;
+    if (isMarketTime) this.marketService.syncGainers();
+  }
 }
