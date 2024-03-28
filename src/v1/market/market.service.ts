@@ -31,12 +31,12 @@ export class MarketService {
 
   async syncGainers() {
     const gainerList = await this.indMoney.todayGainers();
-    if (gainerList.length === 0) {
-      await this.telegram.sendMessage(
-        `There seems to be technical issue, Please contact Rahil Patel ASAP`,
-      );
-      return;
-    }
+    // if (gainerList.length === 0) {
+    //   await this.telegram.sendMessage(
+    //     `There seems to be technical issue, Please contact Rahil Patel ASAP`,
+    //   );
+    //   return;
+    // }
 
     const finalizedList = [];
     gainerList.forEach((el) => {
