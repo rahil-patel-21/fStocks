@@ -19,13 +19,12 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/4 * * * * *')
+  @Cron('*/4 * 9-14 * * 1-5')
   handleCron() {
-    if (Env.server.isCronEnabled) {
+    if (!Env.server.isCronEnabled) {
       const today = new Date();
       const hours = today.getHours();
       const minutes = today.getMinutes();
-
       let isMarketTime = false;
       if (hours >= 9 && hours <= 15) {
         if (hours == 9) {
@@ -40,7 +39,7 @@ export class AppController {
     }
   }
 
-  @Cron('*/30 * * * * *')
+  @Cron('*/30 * 9-14 * * 1-5')
   handleCronForGainers() {
     if (Env.server.isCronEnabled) {
       const today = new Date();
