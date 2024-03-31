@@ -39,3 +39,4 @@ targetData.json
 
 *.sh
 docker-compose.yml
+gainer.json

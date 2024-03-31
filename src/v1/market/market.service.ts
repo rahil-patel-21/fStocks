@@ -82,13 +82,6 @@ export class MarketService {
       }
     }
 
-    // In active all
-    await this.dbManager.updateAll(
-      StockList,
-      { isActive: false },
-      { where: { id: { [Op.notIn]: targetIds } } },
-    );
-
     // active all
     await this.dbManager.updateAll(
       StockList,

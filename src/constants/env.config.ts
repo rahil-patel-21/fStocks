@@ -14,6 +14,7 @@ export const Env = {
   },
 
   server: {
+    isCronEnabled: process.env.SERVER_CRON === 'TRUE',
     port: process.env.SERVER_PORT ?? 3000,
   },
 

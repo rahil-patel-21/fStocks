@@ -1,31 +1,18 @@
 // Imports
+import * as fs from 'fs';
 import { exec } from 'child_process';
 import { Injectable } from '@nestjs/common';
-import { APIService } from 'src/utils/api.service';
 
 @Injectable()
 export class IndMoneyService {
-  constructor(private readonly api: APIService) {}
+  constructor() {}
 
   async todayGainers() {
-    const response = await this
-      .executeCommand(`curl 'https://indian-stock-broker.indmoney.com/catalog/listing?category=top_gainer_stock&limit=50' \
-      -H 'accept: */*' \
-      -H 'accept-language: en-GB,en;q=0.7' \
-      -H 'origin: https://www.indstocks.com' \
-      -H 'platform: web' \
-      -H 'referer: https://www.indstocks.com/' \
-      -H 'sec-ch-ua: "Brave";v="123", "Not:A-Brand";v="8", "Chromium";v="123"' \
-      -H 'sec-ch-ua-mobile: ?1' \
-      -H 'sec-ch-ua-platform: "Android"' \
-      -H 'sec-fetch-dest: empty' \
-      -H 'sec-fetch-mode: cors' \
-      -H 'sec-fetch-site: cross-site' \
-      -H 'sec-gpc: 1' \
-      -H 'user-agent: Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Mobile Safari/537.36'`);
+    const responseStr = await fs.readFileSync('./gainer.json', 'utf-8');
+    const response = JSON.parse(responseStr);
 
-    if (JSON.parse(response).data) {
-      const targetList = JSON.parse(response).data.filter(
+    if (response.data) {
+      const targetList = response.data.filter(
         (el) => el.exchange === 'NSE' && el.category != 'Large Cap',
       );
       targetList.forEach((el) => {
