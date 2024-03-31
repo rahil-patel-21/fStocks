@@ -174,6 +174,7 @@ export class CalculationSharedService {
         continue;
       }
       const prevTargetData = targetList[index - 1];
+      if (!prevTargetData) continue;
       const prevClose = prevTargetData.close ?? 0;
 
       const closingDiff = (close * 100) / prevClose - 100;
@@ -181,22 +182,21 @@ export class CalculationSharedService {
       const marketDiff = (close * 100) / marketOpenRate - 100;
 
       // Last n minute -> Currently one minute
-      if (targetList.length - 1 - index <= 12 * 1) {
-        // Movement -> None
-        if (closingDiff === 0) risk -= 2.5;
-        // Movement -> Up
-        else if (closingDiff > 0 && closingDiff <= 0.025) risk -= 25;
-        // Movement -> Up more
-        else if (closingDiff > 0.025 && closingDiff <= 0.075) risk -= 40;
-        // Movement -> Bullish
-        else if (closingDiff > 0.075 && closingDiff <= 0.1) risk -= 55;
-        // Movement -> Bullish
-        else if (closingDiff > 0.1) risk -= 75;
-        // Movement -> Down
-        else if (closingDiff < 0 && closingDiff >= -0.05) risk += 10;
-        // Movement -> Bearish
-        else if (closingDiff < -0.05) risk += 30;
-      }
+
+      // Movement -> None
+      if (closingDiff === 0) risk -= 2.5;
+      // Movement -> Up
+      else if (closingDiff > 0 && closingDiff <= 0.025) risk -= 25;
+      // Movement -> Up more
+      else if (closingDiff > 0.025 && closingDiff <= 0.075) risk -= 40;
+      // Movement -> Bullish
+      else if (closingDiff > 0.075 && closingDiff <= 0.1) risk -= 55;
+      // Movement -> Bullish
+      else if (closingDiff > 0.1) risk -= 75;
+      // Movement -> Down
+      else if (closingDiff < 0 && closingDiff >= -0.05) risk += 10;
+      // Movement -> Bearish
+      else if (closingDiff < -0.05) risk += 30;
 
       // Last record
       if (index === targetList.length - 1) {
@@ -219,8 +219,8 @@ export class CalculationSharedService {
     }
 
     // Prevention -> Movement -> Bearish
+    const lastRecord = targetList[targetList.length - 1];
     if (risk < 20) {
-      const lastRecord = targetList[targetList.length - 1];
       const last5MinsList = targetList.filter(
         (el) => el.sessionTime.getTime() - lastRecord.sessionTime.getTime(),
       );
@@ -236,23 +236,6 @@ export class CalculationSharedService {
         else risk = 50;
       } else risk = 50;
 
-      // Market is about to open or close (Market rush prevention & Auto square off prevention)
-      if (risk < 20) {
-        const currentHours = lastRecord.sessionTime.getHours();
-        let isClosingDate = false;
-        let isOpeningGate = false;
-        if (currentHours >= 14 || currentHours == 9) {
-          if (currentHours >= 15) isClosingDate = true;
-          else {
-            const currentMinutes = lastRecord.sessionTime.getMinutes();
-            if (currentMinutes >= 30 && currentHours != 9) isClosingDate = true;
-            else if (currentHours === 9 && currentMinutes < 20)
-              isOpeningGate = true;
-          }
-        }
-        if (isClosingDate || isOpeningGate) risk = 100;
-      }
-
       // Prevention -> Movement -> Stable
       if (risk < 20) {
         if (risk < 0) risk = 0;
@@ -267,6 +250,21 @@ export class CalculationSharedService {
         }
       }
     }
+
+    // Market is about to open or close (Market rush prevention & Auto square off prevention)
+    const currentHours = lastRecord.sessionTime.getHours();
+    let isClosingDate = false;
+    let isOpeningGate = false;
+    if (currentHours >= 14 || currentHours == 9) {
+      if (currentHours >= 15) isClosingDate = true;
+      else {
+        const currentMinutes = lastRecord.sessionTime.getMinutes();
+        if (currentMinutes >= 30 && currentHours != 9) isClosingDate = true;
+        else if (currentHours === 9 && currentMinutes < 20)
+          isOpeningGate = true;
+      }
+    }
+    if (isClosingDate || isOpeningGate) risk = 100;
 
     if (risk > 100) risk = 100;
     else if (risk < 0) risk = 0;
