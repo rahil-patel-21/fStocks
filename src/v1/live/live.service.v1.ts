@@ -26,7 +26,6 @@ export class LiveServiceV1 {
   ) {}
 
   async init(reqData) {
-    console.time('a');
     const stockId = reqData.stockId ?? -1;
 
     // Preparation -> Query
@@ -38,7 +37,7 @@ export class LiveServiceV1 {
     // Market closed
     else expiredTime.setMinutes(expiredTime.getMinutes() - 30);
     const stockOptions = {
-      limit: 50,
+      limit: 99,
       where: { id: stockId, isActive: true },
     };
     if (stockId == -1) delete stockOptions.where.id;
@@ -84,7 +83,6 @@ export class LiveServiceV1 {
         console.log({ error });
       }
     }
-    console.timeEnd('a');
   }
 
   //#region Sync Dhan stock
