@@ -67,6 +67,7 @@ export class LiveServiceV1 {
 
     for (let index = 0; index < responseList.length; index++) {
       try {
+        console.log({ index });
         const response = responseList[index];
         if (response.valid === true) {
           response.alert = reqData.alert;
@@ -75,6 +76,7 @@ export class LiveServiceV1 {
           this.syncDhanIndividualStock(response);
           // Predict response
         } else {
+          console.log('ERROR');
           this.telegram.sendMessage(
             `Dhan request failed for id ${response.dhanId}`,
           );
@@ -130,10 +132,12 @@ export class LiveServiceV1 {
         break;
       } else if (!maxTime) {
         creationData.risk = this.calculation.predictRiskV2(targetList);
+        console.log(creationData.risk);
         const diffInSecs = this.dateService.difference(
           creationData.sessionTime,
           today,
         );
+        console.log(diffInSecs);
         if (
           creationData.risk == 0 &&
           alert &&
