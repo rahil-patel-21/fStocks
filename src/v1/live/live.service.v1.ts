@@ -1,8 +1,7 @@
 // Imports
+import { Op } from 'sequelize';
 import { Injectable } from '@nestjs/common';
 import { FunService } from 'src/utils/fun.service';
-import { APIService } from 'src/utils/api.service';
-import { DateService } from 'src/utils/date.service';
 import { StockList } from 'src/database/tables/Stock.list';
 import { DhanService } from 'src/thirdparty/dhan/dhan.service';
 import { DatabaseManager } from 'src/database/database.manager';
@@ -20,9 +19,7 @@ export class LiveServiceV1 {
     private readonly dhan: DhanService,
     private readonly telegram: TelegramService,
     // Utils
-    private readonly dateService: DateService,
     private readonly funService: FunService,
-    private readonly apiService: APIService,
   ) {}
 
   async init(reqData) {
@@ -37,8 +34,8 @@ export class LiveServiceV1 {
     // Market closed
     else expiredTime.setMinutes(expiredTime.getMinutes() - 30);
     const stockOptions = {
-      limit: 99,
-      where: { id: stockId, isActive: true },
+      limit: 50,
+      where: { dhanId: { [Op.ne]: null }, id: stockId, isActive: true },
     };
     if (stockId == -1) delete stockOptions.where.id;
     // Hit -> Query
@@ -50,56 +47,31 @@ export class LiveServiceV1 {
     targetList = this.funService.shuffleArray(targetList);
 
     // Iterate and git the api
-    const promiseList = [];
     for (let index = 0; index < targetList.length; index++) {
-      promiseList.push(
-        this.dhan.getData({
-          dhanId: targetList[index].dhanId,
-          targetDate: reqData.targetDate,
-          stockId: targetList[index].id,
-          stockName: targetList[index].name,
-        }),
-      );
-      //break;
-    }
-
-    const responseList = await Promise.all(promiseList);
-
-    for (let index = 0; index < responseList.length; index++) {
-      try {
-        console.log({ index });
-        const response = responseList[index];
-        if (response.valid === true) {
-          response.alert = reqData.alert;
-          response.maxTime = reqData.maxTime;
-          response.isRealTime = reqData.isRealTime;
-          this.syncDhanIndividualStock(response);
-          // Predict response
-        } else {
-          console.log('ERROR');
-          this.telegram.sendMessage(
-            `Dhan request failed for id ${response.dhanId}`,
-          );
-        }
-      } catch (error) {
-        console.log({ error });
-      }
+      const response: any = await this.dhan.getData({
+        dhanId: targetList[index].dhanId,
+        maxTime: reqData.maxTime,
+        targetDate: reqData.targetDate,
+        stockId: targetList[index].id,
+        stockName: targetList[index].name,
+      });
+      if (response.valid === true) {
+        response.maxTime = reqData.maxTime;
+        this.predictStockMovement(response);
+        // Predict response
+      } else console.log('ERROR');
     }
   }
 
   //#region Sync Dhan stock
-  syncDhanIndividualStock(reqData) {
+  predictStockMovement(reqData) {
     const stockId = reqData.stockId;
     const stockName = reqData.stockName ?? '';
-    const maxTime = reqData.maxTime;
-    const alert = reqData.alert === true;
-    const isRealTime = reqData.realTime ?? true;
 
     const bulkList = [];
-    const today = new Date();
     for (let index = 0; index < reqData.open.length; index++) {
       // Filtering un necessary past data
-      if (index != 0 && reqData.open.length - index > 13 && !maxTime) continue;
+      if (index != 0 && reqData.open.length - index > 13) continue;
 
       const date = new Date(reqData.time[index] * 1000);
       const creationData = {
@@ -119,30 +91,19 @@ export class LiveServiceV1 {
       const targetList = bulkList;
       targetList.push(creationData);
 
-      if (maxTime && creationData.sessionTime.toString().includes(maxTime)) {
-        creationData.risk = this.calculation.predictRiskV2(targetList);
-        if (creationData.risk == 0 && alert) {
-          const message = `${stockName} \nValue - ${
-            creationData.close
-          } \nTime - ${creationData.sessionTime
-            .toString()
-            .replace(' GMT+0530 (India Standard Time)', '')}`;
-          this.telegram.sendMessage(message);
+      if (index == reqData.open.length - 1) {
+        const last5MinsList = [];
+        if (index > 60) {
+          for (let i = index - 60; i < index; i++) {
+            last5MinsList.push({ close: reqData.close[i] });
+          }
         }
-        break;
-      } else if (!maxTime) {
-        creationData.risk = this.calculation.predictRiskV2(targetList);
-        console.log(creationData.risk);
-        const diffInSecs = this.dateService.difference(
-          creationData.sessionTime,
-          today,
+        creationData.risk = this.calculation.predictRiskV2(
+          targetList,
+          last5MinsList,
         );
-        console.log(diffInSecs);
-        if (
-          creationData.risk == 0 &&
-          alert &&
-          (diffInSecs <= 9 || !isRealTime)
-        ) {
+        console.log(creationData.risk);
+        if (creationData.risk === 0) {
           const message = `${stockName.name} \nValue - ${
             creationData.close
           } \nTime - ${creationData.sessionTime

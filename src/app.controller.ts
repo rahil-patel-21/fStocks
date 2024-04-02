@@ -21,33 +21,12 @@ export class AppController {
 
   @Cron('*/4 * 9-14 * * 1-5')
   handleCron() {
-    if (!Env.server.isCronEnabled) {
-      const today = new Date();
-      const hours = today.getHours();
-      const minutes = today.getMinutes();
-      let isMarketTime = false;
-      if (hours >= 9 && hours <= 15) {
-        if (hours == 9) {
-          if (minutes >= 15) isMarketTime = true;
-        } else if (hours == 15) {
-          if (minutes <= 30) isMarketTime = true;
-        } else isMarketTime = true;
-      }
-      if (isMarketTime) {
-        this.liveService.init({ alert: true, stockId: -1 });
-      }
-    }
+    if (Env.server.isCronEnabled)
+      this.liveService.init({ alert: true, stockId: -1 });
   }
 
   @Cron('*/30 * 9-14 * * 1-5')
   handleCronForGainers() {
-    if (Env.server.isCronEnabled) {
-      const today = new Date();
-      const hours = today.getHours();
-
-      let isMarketTime = false;
-      if (hours >= 9 && hours <= 15) isMarketTime = true;
-      if (isMarketTime) this.marketService.syncGainers();
-    }
+    if (Env.server.isCronEnabled) this.marketService.syncGainers();
   }
 }

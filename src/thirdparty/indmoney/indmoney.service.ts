@@ -1,6 +1,5 @@
 // Imports
 import * as fs from 'fs';
-import { exec } from 'child_process';
 import { Injectable } from '@nestjs/common';
 
 @Injectable()
@@ -13,7 +12,10 @@ export class IndMoneyService {
 
     if (response.data) {
       const targetList = response.data.filter(
-        (el) => el.exchange === 'NSE' && el.category != 'Large Cap',
+        (el) =>
+          el.exchange === 'NSE' &&
+          el.category != 'Large Cap' &&
+          el.change <= 12,
       );
       targetList.forEach((el) => {
         delete el.companyCode;
@@ -34,25 +36,9 @@ export class IndMoneyService {
         delete el.technical;
         delete el.total_analysts;
       });
-      console.log('Gainer list', targetList.length);
       return targetList;
     }
 
     return [];
-  }
-
-  async executeCommand(command: string): Promise<any> {
-    return new Promise((resolve, reject) => {
-      exec(command, (error, stdout, stderr) => {
-        if (stdout) resolve(stdout);
-        else if (error) {
-          reject(error);
-          return;
-        } else if (stderr) {
-          reject(new Error(stderr));
-          return;
-        }
-      });
-    });
   }
 }

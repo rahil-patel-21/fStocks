@@ -21,6 +21,15 @@ export class DhanService {
       // Set to stock market closing time
       endDate.setHours(15);
       endDate.setMinutes(30);
+      let maxTime = reqData.maxTime;
+      if (maxTime.includes(':')) {
+        const spans = maxTime.split(':');
+        maxTime = new Date(targetDate);
+        maxTime.setHours(spans[0]);
+        maxTime.setMinutes(spans[1]);
+        maxTime.setSeconds(spans[2]);
+        maxTime = maxTime.getTime() / 1000;
+      } else maxTime = null;
 
       // Preparation -> API
       const body = {
@@ -40,10 +49,20 @@ export class DhanService {
       // Hit -> API
       const response = await this.api.post(url, body, headers);
       const res_data = response?.data;
-      const open = res_data?.o;
-      const close = res_data?.c;
-      const time = res_data?.t;
-      if (!open || !open?.length) throw Error();
+      let open = res_data?.o;
+      let close = res_data?.c;
+      let time = res_data?.t;
+      if (!open || !open?.length) return { valid: false };
+
+      if (maxTime && time.includes(maxTime)) {
+        let index = time.findIndex((el) => el === maxTime);
+        if (index != -1) {
+          index++;
+          time = time.slice(0, index);
+          open = open.slice(0, index);
+          close = close.slice(0, index);
+        }
+      }
 
       return {
         dhanId: reqData.dhanId,

@@ -82,6 +82,13 @@ export class MarketService {
       }
     }
 
+    // Disable all
+    await this.dbManager.updateAll(
+      StockList,
+      { isActive: false },
+      { where: { isActive: true } },
+    );
+
     // active all
     await this.dbManager.updateAll(
       StockList,
