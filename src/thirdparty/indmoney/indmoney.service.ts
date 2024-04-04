@@ -14,8 +14,8 @@ export class IndMoneyService {
       const targetList = response.data.filter(
         (el) =>
           el.exchange === 'NSE' &&
-          el.category != 'Large Cap' &&
-          el.change <= 12,
+          el.category == 'Small Cap' &&
+          el.change <= 10,
       );
       targetList.forEach((el) => {
         delete el.companyCode;

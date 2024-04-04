@@ -104,7 +104,7 @@ export class LiveServiceV1 {
         );
         console.log(creationData.risk);
         if (creationData.risk === 0) {
-          const message = `${stockName.name} \nValue - ${
+          const message = `${stockName} \nValue - ${
             creationData.close
           } \nTime - ${creationData.sessionTime
             .toString()

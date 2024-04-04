@@ -22,7 +22,7 @@ export class DhanService {
       endDate.setHours(15);
       endDate.setMinutes(30);
       let maxTime = reqData.maxTime;
-      if (maxTime.includes(':')) {
+      if (maxTime && maxTime?.includes(':')) {
         const spans = maxTime.split(':');
         maxTime = new Date(targetDate);
         maxTime.setHours(spans[0]);
