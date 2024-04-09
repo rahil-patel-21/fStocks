@@ -41,13 +41,14 @@ export class LiveServiceV1 {
     // Hit -> Query
     let targetList = await this.dbManager.getAll(
       StockList,
-      ['dhanId', 'id', 'name'],
+      ['dhanId', 'id', 'name', 'isInId'],
       stockOptions,
     );
     targetList = this.funService.shuffleArray(targetList);
 
     // Iterate and git the api
     for (let index = 0; index < targetList.length; index++) {
+      console.log(targetList[index]);
       const response: any = await this.dhan.getData({
         dhanId: targetList[index].dhanId,
         maxTime: reqData.maxTime,
@@ -57,21 +58,22 @@ export class LiveServiceV1 {
       });
       if (response.valid === true) {
         response.maxTime = reqData.maxTime;
-        this.predictStockMovement(response);
+        response.isInId = targetList[index].isInId;
+        await this.predictStockMovement(response);
         // Predict response
       } else console.log('ERROR');
     }
   }
 
   //#region Sync Dhan stock
-  predictStockMovement(reqData) {
+  async predictStockMovement(reqData) {
     const stockId = reqData.stockId;
     const stockName = reqData.stockName ?? '';
 
     const bulkList = [];
     for (let index = 0; index < reqData.open.length; index++) {
       // Filtering un necessary past data
-      if (index != 0 && reqData.open.length - index > 13) continue;
+      if (index != 0 && reqData.open.length - index > 5) continue;
 
       const date = new Date(reqData.time[index] * 1000);
       const creationData = {
@@ -93,8 +95,8 @@ export class LiveServiceV1 {
 
       if (index == reqData.open.length - 1) {
         const last5MinsList = [];
-        if (index > 60) {
-          for (let i = index - 60; i < index; i++) {
+        if (index > 20) {
+          for (let i = index - 20; i < index; i++) {
             last5MinsList.push({ close: reqData.close[i] });
           }
         }
@@ -102,8 +104,9 @@ export class LiveServiceV1 {
           targetList,
           last5MinsList,
         );
-        console.log(creationData.risk);
-        if (creationData.risk === 0) {
+        if (creationData.risk <= 10) {
+          const isInRes = await this.dhan.getIsInData(reqData.isInId);
+          console.log(isInRes.dominantBuy, reqData.isInId);
           const message = `${stockName} \nValue - ${
             creationData.close
           } \nTime - ${creationData.sessionTime

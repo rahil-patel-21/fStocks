@@ -19,13 +19,13 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/4 * 9-14 * * 1-5')
+  @Cron('*/14 * 9-14 * * 1-5')
   handleCron() {
     if (Env.server.isCronEnabled)
       this.liveService.init({ alert: true, stockId: -1 });
   }
 
-  @Cron('*/30 * 9-14 * * 1-5')
+  @Cron('*/45 * 9-14 * * 1-5')
   handleCronForGainers() {
     if (Env.server.isCronEnabled) this.marketService.syncGainers();
   }

@@ -12,16 +12,15 @@ export class CalculationSharedService {
     for (let index = 0; index < targetList.length; index++) {
       // Preparation -> data
       const targetData = targetList[index];
+      console.log({ targetData });
       const close = targetData.close ?? 0;
+      const open = targetData.open ?? 0;
       if (index === 0) {
         marketOpenRate = targetData.open;
         continue;
       }
-      const prevTargetData = targetList[index - 1];
-      if (!prevTargetData) continue;
-      const prevClose = prevTargetData.close ?? 0;
 
-      const closingDiff = (close * 100) / prevClose - 100;
+      const closingDiff = (close * 100) / open - 100;
       targetList[index].closingDiff = closingDiff;
       const marketDiff = (close * 100) / marketOpenRate - 100;
 

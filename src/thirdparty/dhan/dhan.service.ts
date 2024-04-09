@@ -2,7 +2,7 @@
 import { Injectable } from '@nestjs/common';
 import { APIService } from 'src/utils/api.service';
 import { DHAN_API_GET_DATA_S } from 'src/constants/string';
-import { nDhanSmartSearch } from 'src/constants/network';
+import { nDhanIsInData, nDhanSmartSearch } from 'src/constants/network';
 
 @Injectable()
 export class DhanService {
@@ -96,5 +96,27 @@ export class DhanService {
     } catch (error) {
       return { valid: false };
     }
+  }
+
+  async getIsInData(isInId) {
+    const body = {
+      Data: {
+        Exch: 1,
+        Seg: 1,
+        Isin: isInId,
+      },
+    };
+
+    const response = await this.api.post(nDhanIsInData, body);
+    const data = response.data.find((el) => el.u_ex_nm == 'NSE');
+
+    const totalBuy = data.t_b_qt ?? 0;
+    const totalSell = data.t_s_qty ?? 0;
+    let dominantBuy = 0;
+    if (totalSell === 0 || totalBuy === 0) dominantBuy = 0;
+    else dominantBuy = (totalBuy * 100) / totalSell - 100;
+
+    data.dominantBuy = dominantBuy;
+    return data;
   }
 }
