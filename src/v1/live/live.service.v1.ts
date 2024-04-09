@@ -48,7 +48,6 @@ export class LiveServiceV1 {
 
     // Iterate and git the api
     for (let index = 0; index < targetList.length; index++) {
-      console.log(targetList[index]);
       const response: any = await this.dhan.getData({
         dhanId: targetList[index].dhanId,
         maxTime: reqData.maxTime,

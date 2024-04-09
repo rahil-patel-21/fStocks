@@ -12,7 +12,6 @@ export class CalculationSharedService {
     for (let index = 0; index < targetList.length; index++) {
       // Preparation -> data
       const targetData = targetList[index];
-      console.log({ targetData });
       const close = targetData.close ?? 0;
       const open = targetData.open ?? 0;
       if (index === 0) {
