@@ -47,7 +47,6 @@ export class MarketService {
         shortName: el.symbol,
       });
     });
-    console.log(gainerList.length);
 
     let dhanData: any = await fs.readFileSync('store/dhan_ids.json', 'utf-8');
     dhanData = JSON.parse(dhanData).data;

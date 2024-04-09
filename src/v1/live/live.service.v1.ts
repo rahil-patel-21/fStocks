@@ -105,7 +105,7 @@ export class LiveServiceV1 {
         );
         if (creationData.risk <= 10) {
           const isInRes = await this.dhan.getIsInData(reqData.isInId);
-          console.log(isInRes.dominantBuy, reqData.isInId);
+          console.log('dominantBuy', isInRes.dominantBuy, reqData.isInId);
           const message = `${stockName} \nValue - ${
             creationData.close
           } \nTime - ${creationData.sessionTime
