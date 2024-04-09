@@ -118,4 +118,23 @@ export class LiveServiceV1 {
 
     return {};
   }
+
+  async keepRecords(reqData) {
+    const currentTime = new Date();
+    currentTime.setHours(10);
+    currentTime.setMinutes(8);
+    currentTime.setSeconds(0);
+
+    let canClose = false;
+    // while (!canClose) {
+    currentTime.setSeconds(currentTime.getSeconds() + 4);
+    // reqData.maxTime = '10:10';
+    //currentTime.toString();
+    await this.init(reqData);
+
+    const mins = currentTime.getMinutes();
+    if (mins === 15) canClose = true;
+    // console.log(mins, currentTime.toString());
+    // }
+  }
 }

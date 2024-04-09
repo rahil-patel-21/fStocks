@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { Op } from 'sequelize';
 import { Injectable } from '@nestjs/common';
 import { StockList } from 'src/database/tables/Stock.list';
+import { DhanService } from 'src/thirdparty/dhan/dhan.service';
 import { DatabaseManager } from 'src/database/database.manager';
 import { IndMoneyService } from 'src/thirdparty/indmoney/indmoney.service';
 import { TelegramService } from 'src/thirdparty/telegram/telegram.service';
@@ -12,6 +13,7 @@ export class MarketService {
   constructor(
     private readonly dbManager: DatabaseManager,
     // Third party
+    private readonly dhan: DhanService,
     private readonly indMoney: IndMoneyService,
     private readonly telegram: TelegramService,
   ) {}
@@ -45,6 +47,7 @@ export class MarketService {
         shortName: el.symbol,
       });
     });
+    console.log(gainerList.length);
 
     let dhanData: any = await fs.readFileSync('store/dhan_ids.json', 'utf-8');
     dhanData = JSON.parse(dhanData).data;
@@ -71,6 +74,13 @@ export class MarketService {
         if (!dhanIdData) continue;
         finalizedData.dhanId = dhanIdData['SEM_SMST_SECURITY_ID'];
         if (!finalizedData.dhanId) continue;
+
+        const isInId = await this.dhan.getIsInId(finalizedData.shortName);
+        if (!isInId) {
+          console.log(finalizedData.shortName);
+          continue;
+        }
+        finalizedData.isInId = isInId;
 
         const createdData = await this.dbManager.insert(
           StockList,

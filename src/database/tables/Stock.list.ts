@@ -49,6 +49,13 @@ export class StockList extends Model<StockList> {
   })
   dhanId: number;
 
+  @Column({
+    allowNull: true,
+    defaultValue: '',
+    type: DataType.TEXT,
+  })
+  isInId: number;
+
   @HasMany(() => StockPricing)
   stockPricingList: StockPricing[];
 }

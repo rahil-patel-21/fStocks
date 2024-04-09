@@ -15,4 +15,14 @@ export class LiveControllerV1 {
       return res.send({ error });
     }
   }
+
+  @Post('keepRecords')
+  async funKeepRecords(@Body() body, @Res() res) {
+    try {
+      this.service.keepRecords(body);
+      return res.send({});
+    } catch (error) {
+      return res.send({ error });
+    }
+  }
 }

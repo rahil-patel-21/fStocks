@@ -2,10 +2,30 @@
 import { Injectable } from '@nestjs/common';
 import { APIService } from 'src/utils/api.service';
 import { DHAN_API_GET_DATA_S } from 'src/constants/string';
+import { nDhanSmartSearch } from 'src/constants/network';
 
 @Injectable()
 export class DhanService {
   constructor(private readonly api: APIService) {}
+
+  async getIsInId(shortName) {
+    if (!shortName) throw new Error();
+
+    const body = {
+      UserType: 'C',
+      Source: 'W',
+      Data: {
+        inst: '',
+        searchterm: shortName,
+        exch: '',
+        optionflag: true,
+      },
+      broker_code: 'DHN1804',
+    };
+    const response = await this.api.post(nDhanSmartSearch, body);
+    const data = response.data.find((el) => el.d_exch_t === 'NSE');
+    return data.ISIN_code_s;
+  }
 
   async getData(reqData) {
     try {
@@ -41,7 +61,7 @@ export class DhanService {
         START_TIME: startDate.toString(),
         END: Math.round(endDate.getTime() / 1000),
         END_TIME: endDate.toString(),
-        INTERVAL: '5S',
+        INTERVAL: '15S',
       };
 
       const url = DHAN_API_GET_DATA_S;
