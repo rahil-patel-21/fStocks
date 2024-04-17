@@ -1,4 +1,5 @@
 // Imports
+import { RawData } from '../tables/Raw.data';
 import { Env } from 'src/constants/env.config';
 import { Sequelize } from 'sequelize-typescript';
 import { StockList } from '../tables/Stock.list';
@@ -13,11 +14,11 @@ export const DatabaseProvider = [
         dialect: 'postgres',
         host: Env.database.host,
         logging: false,
-        port: parseInt(Env.database.host, 10),
+        port: +Env.database.port,
         username: Env.database.username,
         password: Env.database.password,
         database: Env.database.name,
-        models: [StockList, StockPricing],
+        models: [RawData, StockList, StockPricing],
       });
       await sequelize.sync();
 

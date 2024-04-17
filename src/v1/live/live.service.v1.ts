@@ -7,6 +7,7 @@ import { DhanService } from 'src/thirdparty/dhan/dhan.service';
 import { DatabaseManager } from 'src/database/database.manager';
 import { CalculationSharedService } from 'src/shared/calculation.service';
 import { TelegramService } from 'src/thirdparty/telegram/telegram.service';
+import { RawData } from 'src/database/tables/Raw.data';
 
 @Injectable()
 export class LiveServiceV1 {
@@ -140,5 +141,42 @@ export class LiveServiceV1 {
     if (mins === 15) canClose = true;
     // console.log(mins, currentTime.toString());
     // }
+  }
+
+  async scrape() {
+    const stockOptions = {
+      limit: 50,
+      where: {
+        dhanId: { [Op.ne]: null },
+        isActive: true,
+        isInId: { [Op.ne]: null },
+      },
+    };
+
+    // Hit -> Query
+    const targetList = await this.dbManager.getAll(
+      StockList,
+      ['dhanId', 'id', 'name', 'isInId'],
+      stockOptions,
+    );
+
+    const promiseList = [];
+    for (let index = 0; index < targetList.length; index++) {
+      promiseList.push(this.dhan.getIsInData(targetList[index].isInId));
+    }
+
+    try {
+      const resultList = await Promise.all(promiseList);
+
+      const finalizedList = [];
+      for (let index = 0; index < resultList.length; index++) {
+        finalizedList.push({
+          type: 'DHAN_ISIN_DATA',
+          value: resultList[index],
+        });
+      }
+
+      await this.dbManager.bulkInsert(RawData, finalizedList);
+    } catch (error) {}
   }
 }

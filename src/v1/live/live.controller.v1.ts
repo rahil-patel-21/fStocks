@@ -25,4 +25,14 @@ export class LiveControllerV1 {
       return res.send({ error });
     }
   }
+
+  @Post('scrape')
+  async funScrape(@Res() res) {
+    try {
+      this.service.scrape();
+      return res.send({});
+    } catch (error) {
+      return res.send({ error });
+    }
+  }
 }
