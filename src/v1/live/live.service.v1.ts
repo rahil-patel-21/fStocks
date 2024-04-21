@@ -1,13 +1,14 @@
 // Imports
-import { Op } from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import { Injectable } from '@nestjs/common';
 import { FunService } from 'src/utils/fun.service';
+import { RawData } from 'src/database/tables/Raw.data';
+import { LiveData } from 'src/database/tables/Live.data';
 import { StockList } from 'src/database/tables/Stock.list';
 import { DhanService } from 'src/thirdparty/dhan/dhan.service';
 import { DatabaseManager } from 'src/database/database.manager';
 import { CalculationSharedService } from 'src/shared/calculation.service';
 import { TelegramService } from 'src/thirdparty/telegram/telegram.service';
-import { RawData } from 'src/database/tables/Raw.data';
 
 @Injectable()
 export class LiveServiceV1 {
@@ -160,6 +161,24 @@ export class LiveServiceV1 {
       stockOptions,
     );
 
+    // Preparation -> Query -> 2
+    const stockIds = targetList.map((el) => el.id);
+    const today = new Date();
+    today.setHours(0);
+    let liveDataOptions: any = {
+      attributes: [[Sequelize.fn('max', Sequelize.col('id')), 'id']],
+      where: { createdAt: { [Op.gt]: today }, stockId: stockIds },
+    };
+    // Hit -> Query -> 2
+    let liveList = await this.dbManager.getAll(LiveData, liveDataOptions);
+    const liveDataIds = liveList.map((el) => el.id);
+    liveDataOptions = {
+      attributes: ['createdAt', 'price', 'stockId'],
+      where: { id: liveDataIds },
+    };
+    // Hit -> Query -> 3
+    liveList = await this.dbManager.getAll(LiveData, liveDataOptions);
+
     const promiseList = [];
     for (let index = 0; index < targetList.length; index++) {
       promiseList.push(this.dhan.getIsInData(targetList[index].isInId));
@@ -169,14 +188,56 @@ export class LiveServiceV1 {
       const resultList = await Promise.all(promiseList);
 
       const finalizedList = [];
+      const finalizedLiveList = [];
       for (let index = 0; index < resultList.length; index++) {
+        const currentData = resultList[index];
         finalizedList.push({
           type: 'DHAN_ISIN_DATA',
-          value: resultList[index],
+          value: currentData,
         });
+
+        const isInId = currentData.isin;
+        if (!isInId) continue;
+        const targetStockData = targetList.find((el) => el.isInId == isInId);
+        if (!targetStockData) continue;
+        const pastData = liveList.find(
+          (el) => el.stockId == targetStockData.id,
+        );
+        const creationData = {
+          // Price
+          price: currentData.Ltp,
+          prev_price: pastData?.price,
+          price_diff: pastData?.price
+            ? (currentData.Ltp * 100) / pastData?.price - 100
+            : null,
+          // Buy zone
+          total_buy: currentData.t_b_qt,
+          prev_total_buy: pastData?.total_buy,
+          buy_diff:
+            pastData?.total_buy != null && pastData?.total_buy != undefined
+              ? pastData?.total_buy == 0
+                ? 0
+                : (currentData.t_b_qt * 100) / pastData?.total_buy - 100
+              : null,
+          // Sell zone
+          total_sell: currentData.t_s_qty,
+          prev_total_sell: pastData?.total_sell,
+          sell_diff:
+            pastData?.total_sell != null && pastData?.total_sell != undefined
+              ? pastData?.total_sell == 0
+                ? 0
+                : (currentData.t_s_qty * 100) / pastData?.total_sell - 100
+              : null,
+          // Join
+          stockId: targetStockData.id,
+        };
+        finalizedLiveList.push(creationData);
       }
 
-      await this.dbManager.bulkInsert(RawData, finalizedList);
+      await Promise.all([
+        this.dbManager.bulkInsert(RawData, finalizedList),
+        this.dbManager.bulkInsert(LiveData, finalizedLiveList),
+      ]);
     } catch (error) {}
   }
 }

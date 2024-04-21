@@ -1,6 +1,7 @@
 // Imports
 import { RawData } from '../tables/Raw.data';
 import { Env } from 'src/constants/env.config';
+import { LiveData } from '../tables/Live.data';
 import { Sequelize } from 'sequelize-typescript';
 import { StockList } from '../tables/Stock.list';
 import { StockPricing } from '../tables/Stock.pricing';
@@ -18,7 +19,7 @@ export const DatabaseProvider = [
         username: Env.database.username,
         password: Env.database.password,
         database: Env.database.name,
-        models: [RawData, StockList, StockPricing],
+        models: [LiveData, RawData, StockList, StockPricing],
       });
       await sequelize.sync();
 

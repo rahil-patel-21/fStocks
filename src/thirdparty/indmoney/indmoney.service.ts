@@ -16,7 +16,8 @@ export class IndMoneyService {
           el.exchange === 'NSE' &&
           el.category == 'Small Cap' &&
           el.change <= 10 &&
-          el.price <= 2000,
+          el.price < 2000 &&
+          el.price > 10,
       );
       targetList.forEach((el) => {
         delete el.companyCode;
