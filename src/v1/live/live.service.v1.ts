@@ -187,14 +187,9 @@ export class LiveServiceV1 {
     try {
       const resultList = await Promise.all(promiseList);
 
-      const finalizedList = [];
       const finalizedLiveList = [];
       for (let index = 0; index < resultList.length; index++) {
         const currentData = resultList[index];
-        finalizedList.push({
-          type: 'DHAN_ISIN_DATA',
-          value: currentData,
-        });
 
         const isInId = currentData.isin;
         if (!isInId) continue;
@@ -234,10 +229,7 @@ export class LiveServiceV1 {
         finalizedLiveList.push(creationData);
       }
 
-      await Promise.all([
-        this.dbManager.bulkInsert(RawData, finalizedList),
-        this.dbManager.bulkInsert(LiveData, finalizedLiveList),
-      ]);
+      await this.dbManager.bulkInsert(LiveData, finalizedLiveList);
     } catch (error) {}
   }
 }
