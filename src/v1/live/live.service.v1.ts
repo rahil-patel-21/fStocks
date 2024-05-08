@@ -2,7 +2,6 @@
 import { Op, Sequelize } from 'sequelize';
 import { Injectable } from '@nestjs/common';
 import { FunService } from 'src/utils/fun.service';
-import { RawData } from 'src/database/tables/Raw.data';
 import { LiveData } from 'src/database/tables/Live.data';
 import { StockList } from 'src/database/tables/Stock.list';
 import { DhanService } from 'src/thirdparty/dhan/dhan.service';
