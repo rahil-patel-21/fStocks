@@ -164,19 +164,33 @@ export class LiveServiceV1 {
     const stockIds = targetList.map((el) => el.id);
     const today = new Date();
     today.setHours(0);
+    const liveDataAttr = [
+      [Sequelize.fn('max', Sequelize.col('id')), 'id'],
+      'stockId',
+    ];
     let liveDataOptions: any = {
-      attributes: [[Sequelize.fn('max', Sequelize.col('id')), 'id']],
-      where: { createdAt: { [Op.gt]: today }, stockId: stockIds },
+      group: ['stockId'], // Grouping by stockId
+      where: {
+        createdAt: { [Op.gt]: today },
+        stockId: stockIds,
+      },
     };
     // Hit -> Query -> 2
-    let liveList = await this.dbManager.getAll(LiveData, liveDataOptions);
+    let liveList = await this.dbManager.getAll(
+      LiveData,
+      liveDataAttr,
+      liveDataOptions,
+    );
     const liveDataIds = liveList.map((el) => el.id);
     liveDataOptions = {
-      attributes: ['createdAt', 'price', 'stockId'],
       where: { id: liveDataIds },
     };
     // Hit -> Query -> 3
-    liveList = await this.dbManager.getAll(LiveData, liveDataOptions);
+    liveList = await this.dbManager.getAll(
+      LiveData,
+      ['createdAt', 'price', 'stockId', 'total_buy', 'total_sell'],
+      liveDataOptions,
+    );
 
     const promiseList = [];
     for (let index = 0; index < targetList.length; index++) {
@@ -197,6 +211,7 @@ export class LiveServiceV1 {
         const pastData = liveList.find(
           (el) => el.stockId == targetStockData.id,
         );
+
         const creationData = {
           // Price
           price: currentData.Ltp,
