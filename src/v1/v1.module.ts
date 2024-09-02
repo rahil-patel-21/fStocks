@@ -12,6 +12,8 @@ import { DatabaseModule } from 'src/database/database.module';
 import { MarketController } from './market/market.controller';
 import { ManualControllerV1 } from './manual/manual.controller.v1';
 import { ThirdPartyModule } from 'src/thirdparty/thirdparty.module';
+import { PredictionService } from './prediction/prediction.service';
+import { PredictionController } from './prediction/prediction.controller';
 
 @Module({
   imports: [DatabaseModule, SharedModule, ThirdPartyModule, UtilsModule],
@@ -19,9 +21,16 @@ import { ThirdPartyModule } from 'src/thirdparty/thirdparty.module';
     LiveControllerV1,
     MarketController,
     ManualControllerV1,
+    PredictionController,
     TestController,
   ],
   exports: [LiveServiceV1, MarketService],
-  providers: [LiveServiceV1, MarketService, ManualServiceV1, TestService],
+  providers: [
+    LiveServiceV1,
+    MarketService,
+    ManualServiceV1,
+    PredictionService,
+    TestService,
+  ],
 })
 export class V1Module {}
