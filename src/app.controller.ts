@@ -19,13 +19,18 @@ export class AppController {
     return this.appService.getHello();
   }
 
-  @Cron('*/5 * 9-14 * * 1-5')
-  handle5SecCron() {
-    if (Env.server.isCronEnabled) this.liveService.scrape();
-  }
+  // @Cron('*/5 * 9-14 * * 1-5')
+  // handle5SecCron() {
+  //   if (Env.server.isCronEnabled) this.liveService.scrape();
+  // }
 
-  @Cron('*/45 * 9-14 * * 1-5')
-  handleCronForGainers() {
-    if (Env.server.isCronEnabled) this.marketService.syncGainers();
+  // @Cron('*/45 * 9-14 * * 1-5')
+  // handleCronForGainers() {
+  //   if (Env.server.isCronEnabled) this.marketService.syncGainers();
+  // }
+
+  @Cron('*/5 * * * * *')
+  handle10SecCron() {
+    if (Env.server.isCronEnabled) this.liveService.fetchMarkets();
   }
 }

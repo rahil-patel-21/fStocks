@@ -13,6 +13,10 @@ export const Env = {
     ssl: process.env.DB_SSL,
   },
 
+  dhan: {
+    topValueUrl: process.env.DHAN_TOP_VALUES,
+  },
+
   server: {
     isCronEnabled: process.env.SERVER_CRON === 'TRUE',
     port: process.env.SERVER_PORT ?? 3000,

@@ -5,6 +5,7 @@ import { LiveData } from '../tables/Live.data';
 import { Sequelize } from 'sequelize-typescript';
 import { StockList } from '../tables/Stock.list';
 import { StockPricing } from '../tables/Stock.pricing';
+import { MarketEntity } from '../tables/Markets';
 
 export const DatabaseProvider = [
   {
@@ -14,12 +15,18 @@ export const DatabaseProvider = [
         define: { timestamps: true, freezeTableName: true },
         dialect: 'postgres',
         host: Env.database.host,
+        dialectOptions: {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        },
         logging: false,
         port: +Env.database.port,
         username: Env.database.username,
         password: Env.database.password,
         database: Env.database.name,
-        models: [LiveData, RawData, StockList, StockPricing],
+        models: [LiveData, MarketEntity, RawData, StockList, StockPricing],
       });
       await sequelize.sync();
 

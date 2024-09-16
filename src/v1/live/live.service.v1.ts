@@ -4,6 +4,7 @@ import { Injectable } from '@nestjs/common';
 import { FunService } from 'src/utils/fun.service';
 import { LiveData } from 'src/database/tables/Live.data';
 import { StockList } from 'src/database/tables/Stock.list';
+import { MarketEntity } from 'src/database/tables/Markets';
 import { DhanService } from 'src/thirdparty/dhan/dhan.service';
 import { DatabaseManager } from 'src/database/database.manager';
 import { CalculationSharedService } from 'src/shared/calculation.service';
@@ -245,5 +246,12 @@ export class LiveServiceV1 {
 
       await this.dbManager.bulkInsert(LiveData, finalizedLiveList);
     } catch (error) {}
+  }
+
+  async fetchMarkets() {
+    const marketList = await this.dhan.topValue();
+    await this.dbManager.bulkInsert(MarketEntity, marketList);
+
+    return {};
   }
 }

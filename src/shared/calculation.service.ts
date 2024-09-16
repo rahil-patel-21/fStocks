@@ -103,4 +103,6 @@ export class CalculationSharedService {
 
     return risk;
   }
+
+  predict30Sec() {}
 }
