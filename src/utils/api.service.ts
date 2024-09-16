@@ -24,11 +24,7 @@ export class APIService {
       if (!result) return false;
       return result;
     } catch (error) {
-      //   try {
-      //     if (isSendData) return kUnproccesableData(error?.response?.data);
-      //     console.log(JSON.stringify(error), JSON.stringify(error.response.data));
-      //   } catch (error) {}
-      //   return k500Error;
+      return error?.response?.data;
     }
   }
 
@@ -43,9 +39,7 @@ export class APIService {
       const result = response.data;
       return result;
     } catch (error) {
-      try {
-        // if (isSendData) return kUnproccesableData(error?.response?.data);
-      } catch (error) {}
+      return error?.response?.data;
     }
   }
 }

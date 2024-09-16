@@ -1,6 +1,6 @@
 // Imports
 import { LiveServiceV1 } from './live.service.v1';
-import { Body, Controller, Get, Post, Query, Res } from '@nestjs/common';
+import { Body, Controller, Post, Res } from '@nestjs/common';
 
 @Controller('live')
 export class LiveControllerV1 {
@@ -16,23 +16,22 @@ export class LiveControllerV1 {
     }
   }
 
-  @Post('predict')
-  async funPredict(@Body() body, @Res() res) {
+  @Post('keepRecords')
+  async funKeepRecords(@Body() body, @Res() res) {
     try {
-      const data = await this.service.predictStock(body);
-      return res.send({ data });
+      this.service.keepRecords(body);
+      return res.send({});
     } catch (error) {
       return res.send({ error });
     }
   }
 
-  @Get('predictPerformance')
-  async funPredictPerformance(@Query() query, @Res() res) {
+  @Post('scrape')
+  async funScrape(@Res() res) {
     try {
-      const data = await this.service.predictPerformance(query);
-      return res.send({ data });
+      this.service.scrape();
+      return res.send({});
     } catch (error) {
-      console.log({ error });
       return res.send({ error });
     }
   }

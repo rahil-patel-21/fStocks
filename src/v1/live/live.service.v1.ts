@@ -1,25 +1,27 @@
 // Imports
-import { Op } from 'sequelize';
-import { gInstance } from 'src/globals';
+import { Op, Sequelize } from 'sequelize';
 import { Injectable } from '@nestjs/common';
 import { FunService } from 'src/utils/fun.service';
-import { FileService } from 'src/utils/file.service';
+import { LiveData } from 'src/database/tables/Live.data';
 import { StockList } from 'src/database/tables/Stock.list';
+import { MarketEntity } from 'src/database/tables/Markets';
+import { DhanService } from 'src/thirdparty/dhan/dhan.service';
 import { DatabaseManager } from 'src/database/database.manager';
-import { StockPricing } from 'src/database/tables/Stock.pricing';
-import { ThirdPartyTrafficTable } from 'src/database/tables/Thirdparty.traffic.table';
-import { APIService } from 'src/utils/api.service';
-import { DHAN_API_GET_DATA_S } from 'src/constants/string';
+import { CalculationSharedService } from 'src/shared/calculation.service';
+import { TelegramService } from 'src/thirdparty/telegram/telegram.service';
 
 @Injectable()
 export class LiveServiceV1 {
   constructor(
     // Database
     private readonly dbManager: DatabaseManager,
+    // Shared
+    private readonly calculation: CalculationSharedService,
+    // ThirdParty
+    private readonly dhan: DhanService,
+    private readonly telegram: TelegramService,
     // Utils
-    private readonly fileService: FileService,
     private readonly funService: FunService,
-    private readonly apiService: APIService,
   ) {}
 
   async init(reqData) {
@@ -34,352 +36,222 @@ export class LiveServiceV1 {
     // Market closed
     else expiredTime.setMinutes(expiredTime.getMinutes() - 30);
     const stockOptions = {
-      limit: 60,
-      order: [['syncedOn', 'ASC']],
-      where: {
-        id: stockId,
-        [Op.or]: [
-          { syncedOn: { [Op.eq]: null } },
-          { syncedOn: { [Op.lte]: expiredTime } },
-        ],
-      },
+      limit: 50,
+      where: { dhanId: { [Op.ne]: null }, id: stockId, isActive: true },
     };
     if (stockId == -1) delete stockOptions.where.id;
     // Hit -> Query
-    const targetList = await this.dbManager.getAll(
+    let targetList = await this.dbManager.getAll(
       StockList,
-      ['id', 'sourceUrl'],
+      ['dhanId', 'id', 'name', 'isInId'],
       stockOptions,
     );
+    targetList = this.funService.shuffleArray(targetList);
 
-    // Iterate
+    // Iterate and git the api
     for (let index = 0; index < targetList.length; index++) {
-      await this.syncDhanIndividualStock(targetList[index]);
-      // await this.syncIndividualStock(targetList[index]);
+      const response: any = await this.dhan.getData({
+        dhanId: targetList[index].dhanId,
+        maxTime: reqData.maxTime,
+        targetDate: reqData.targetDate,
+        stockId: targetList[index].id,
+        stockName: targetList[index].name,
+      });
+      if (response.valid === true) {
+        response.maxTime = reqData.maxTime;
+        response.isInId = targetList[index].isInId;
+        await this.predictStockMovement(response);
+        // Predict response
+      } else console.log('ERROR');
     }
-  }
-
-  async syncIndividualStock(stockData) {
-    // Get configs
-    const targetData = await this.fileService.getTargetData();
-
-    // Go to target page
-    const page = await gInstance.pupBrowser.newPage();
-    await page.goto(stockData.sourceUrl, { waitUntil: 'networkidle0' });
-    await page.bringToFront();
-    await page.waitForSelector(`img[alt="${targetData.pageLoadId}"]`);
-
-    // Add listener
-    await page.on('response', async (response) => {
-      if (response.url().includes(targetData.graphEndpoint)) {
-        if (response.request().method().toUpperCase() != 'OPTIONS') {
-          try {
-            const value = await response.json();
-            await this.dbManager.insert(ThirdPartyTrafficTable, {
-              source: 2,
-              type: 2,
-              value,
-            });
-            await this.syncLatestPrice({ value, stockId: stockData.id });
-            // Hit -> Query
-            await this.dbManager.updateOne(
-              StockList,
-              { syncedOn: new Date() },
-              stockData.id,
-            );
-          } catch (error) {
-            console.log({ error });
-          }
-        }
-      }
-    });
-
-    await page.click(`img[alt="${targetData.pageLoadId}"]`);
-    await this.funService.delay(
-      this.funService.generateRandomValue(1200, 2200),
-    );
   }
 
   //#region Sync Dhan stock
-  async syncDhanIndividualStock(stockData) {
-    // const start = new Date('2024-03-07T09:10:00+05:30');
-    const start = new Date();
-    const end = new Date(start);
-    end.setMinutes(start.getMinutes() + 20);
-    // const stockId = 3405;
-    const stockId = stockData.id;
-
-    const body = {
-      EXCH: 'NSE',
-      SEG: 'E',
-      INST: 'EQUITY',
-      SEC_ID: stockId,
-      START: Math.round(start.getTime() / 1000),
-      END: Math.round(end.getTime() / 1000),
-      INTERVAL: '15S',
-    };
-
-    const url = DHAN_API_GET_DATA_S;
-    const headers = { 'Content-Type': 'application/json' };
-    const res = await this.apiService.post(url, body, headers);
-
-    const res_data = res?.data;
-    const open = res_data?.o;
-    const high = res_data?.h;
-    const low = res_data?.l;
-    const close = res_data?.c;
-    const time = res_data?.t;
-    if (!open || !open?.length) return;
-    const bulkList = [];
-    for (let index = 0; index < open.length; index++) {
-      try {
-        const date = new Date(time[index] * 1000);
-        const creationData = {
-          invest: 0,
-          risk: 0,
-          stockId: stockId,
-          sessionTime: date,
-          open: open[index],
-          close: close[index],
-          closingDiff: parseFloat(
-            (((close[index] - open[index]) * 100) / open[index]).toFixed(2),
-          ),
-          high: high[index],
-          low: low[index],
-          volatileDiff: parseFloat(
-            (((high[index] - low[index]) * 100) / open[index]).toFixed(2),
-          ),
-          uniqueId: stockId + '_' + date.getTime(),
-        };
-        // Prediction to buy stock
-        const targetList = bulkList;
-        targetList.push(creationData);
-        const { invest, risk } = this.predictRisk(targetList);
-        creationData.invest = invest;
-        creationData.risk = risk;
-
-        bulkList.push(creationData);
-      } catch (error) {}
-    }
-
-    await this.dbManager.bulkInsert(StockPricing, bulkList);
-    await this.dbManager.updateOne(
-      StockList,
-      { syncedOn: new Date() },
-      stockData.id,
-    );
-  }
-
-  async syncLatestPrice(reqData) {
-    const candles = reqData.value.candles ?? [];
-
-    const bulkList = [];
-    for (let index = 0; index < candles.length; index++) {
-      try {
-        const data = candles[index];
-        delete data.per;
-        const date = new Date(data.ts * 1000);
-        const creationData = {
-          invest: 0,
-          risk: 0,
-          stockId: reqData.stockId,
-          sessionTime: date,
-          open: data.open,
-          close: data.close,
-          closingDiff: parseFloat(
-            (((data.close - data.open) * 100) / data.open).toFixed(2),
-          ),
-          high: data.high,
-          low: data.low,
-          volatileDiff: parseFloat(
-            (((data.high - data.low) * 100) / data.open).toFixed(2),
-          ),
-          uniqueId: reqData.stockId + '_' + date.getTime(),
-        };
-        // Prediction to buy stock
-        const targetList = bulkList;
-        targetList.push(creationData);
-        const { invest, risk } = this.predictRisk(targetList);
-        creationData.invest = invest;
-        creationData.risk = risk;
-
-        bulkList.push(creationData);
-      } catch (error) {}
-    }
-    // Hit -> Query
-    await this.dbManager.bulkInsert(StockPricing, bulkList);
-  }
-
-  async predictStock(reqData) {
-    // Validation -> Parameters
+  async predictStockMovement(reqData) {
     const stockId = reqData.stockId;
-    if (!stockId) return {};
-    const sessionTime = reqData.sessionTime;
+    const stockName = reqData.stockName ?? '';
 
-    // Preparation -> Query
-    const stockPricingAttr = [
-      'open',
-      'close',
-      'closingDiff',
-      'high',
-      'low',
-      'sessionTime',
-      'volatileDiff',
-    ];
-    const stockPricingOptions: any = {
-      order: [['sessionTime', 'ASC']],
-      where: { stockId },
-    };
-    if (sessionTime)
-      stockPricingOptions.where.sessionTime = { [Op.lte]: sessionTime };
-    // Hit -> Query
-    const rangeList = await this.dbManager.getAll(
-      StockPricing,
-      stockPricingAttr,
-      stockPricingOptions,
-    );
+    const bulkList = [];
+    for (let index = 0; index < reqData.open.length; index++) {
+      // Filtering un necessary past data
+      if (index != 0 && reqData.open.length - index > 5) continue;
 
-    return this.predictRisk(rangeList);
-  }
+      const date = new Date(reqData.time[index] * 1000);
+      const creationData = {
+        risk: 100,
+        stockId,
+        sessionTime: date,
+        open: reqData.open[index],
+        close: reqData.close[index],
+        closingDiff: parseFloat(
+          (
+            ((reqData.close[index] - reqData.open[index]) * 100) /
+            reqData.open[index]
+          ).toFixed(2),
+        ),
+      };
+      // Prediction to buy stock
+      const targetList = bulkList;
+      targetList.push(creationData);
 
-  predictRisk(rangeList) {
-    let risk = 100;
-    let invest = 0;
-    // Market just opened
-    if (rangeList.length <= 1) return { invest, risk };
-
-    // Iterate
-    let initialOpenValue = 0;
-    let totalCloseValue = 0;
-    let avgCloseValue = 0;
-    for (let index = 0; index < rangeList.length; index++) {
-      const rangeData = rangeList[index];
-      if (index == 0) initialOpenValue = rangeData.open;
-      totalCloseValue += rangeData.close;
-      avgCloseValue = totalCloseValue / (index + 1);
-
-      // Check market slope
-      if (rangeData.open < initialOpenValue) {
-        risk += 0.4;
-        invest -= 0.4;
-      } else if (rangeData.open == initialOpenValue) {
-        risk += 0.2;
-        invest -= 0.2;
-      } else if (rangeData.open > initialOpenValue) {
-        risk -= 0.4;
-        invest += 0.4;
-      }
-
-      // Check avg market volatility
-      if (rangeData.volatileDiff > 0) risk -= 0.5;
-      else risk += 0.5;
-
-      // Checks recent market of last 10 minutes
-      if (rangeList.length > 10 && rangeList.length - index <= 10) {
-        if (risk <= 0) risk = 0;
-        if (invest >= 100) invest = 100;
-        const currentDiff =
-          ((rangeData.open - avgCloseValue) * 100) / avgCloseValue;
-        if (currentDiff < -0.1) {
-          risk += 10;
-          invest -= 12;
-        } else if (currentDiff >= -0.1 && currentDiff <= 0) {
-          risk += 5;
-          invest -= 6;
-        } else if (currentDiff > 0 && currentDiff <= 1) {
-          risk -= 10;
-          invest += 12;
-        } else if (currentDiff > 1 && currentDiff <= 20) {
-          risk -= 25;
-          invest += 22;
-        } else if (currentDiff > 20) {
-          risk += 28;
-          invest -= 20;
+      if (index == reqData.open.length - 1) {
+        const last5MinsList = [];
+        if (index > 20) {
+          for (let i = index - 20; i < index; i++) {
+            last5MinsList.push({ close: reqData.close[i] });
+          }
         }
-        // Today's current gain / loss
-        const todayAvgDiff =
-          ((rangeData.close - initialOpenValue) * 100) / initialOpenValue;
-        if (todayAvgDiff > 10 || todayAvgDiff < 10) {
-          risk += 28;
-          invest -= 20;
-        }
-
-        // Making sure last minute rush won't comes with bankruptcy
-        if (risk < 50 || invest > 75) {
-          if (rangeData.closingDiff < -0.25) {
-            risk += 10;
-            invest -= 12;
-          } else if (rangeData.volatileDiff > 2.5) {
-            risk += 2;
-            invest -= 10;
+        creationData.risk = this.calculation.predictRiskV2(
+          targetList,
+          last5MinsList,
+        );
+        if (creationData.risk <= 10) {
+          const isInRes = await this.dhan.getIsInData(reqData.isInId);
+          if (isInRes.dominantBuy >= 40) {
+            console.log('dominantBuy', isInRes.dominantBuy, reqData.isInId);
+            const message = `${stockName} \nValue - ${
+              creationData.close
+            } \nTime - ${creationData.sessionTime
+              .toString()
+              .replace(' GMT+0530 (India Standard Time)', '')}`;
+            this.telegram.sendMessage(message);
           }
         }
       }
+
+      bulkList.push(creationData);
     }
 
-    // Fine tune the value
-    if (risk > 100) risk = 100;
-    else if (risk < 0) risk = 0;
-    if (invest < 0) invest = 0;
-    else if (invest > 100) invest = 100;
-    invest = parseFloat(invest.toFixed(2));
-    risk = parseFloat(risk.toFixed(2));
-
-    return { invest, risk };
+    return {};
   }
 
-  async predictPerformance(reqData) {
-    let targetDateTime = reqData.targetDateTime;
-    targetDateTime = targetDateTime.replace(' 05:30', '+05:30');
-    const minTargetDateTime = new Date(targetDateTime);
-    minTargetDateTime.setMinutes(minTargetDateTime.getMinutes() - 5);
-    const maxTargetDateTime = new Date(targetDateTime);
+  async keepRecords(reqData) {
+    const currentTime = new Date();
+    currentTime.setHours(10);
+    currentTime.setMinutes(8);
+    currentTime.setSeconds(0);
 
-    // Preparation -> Query
-    const stockPricingInclude: any = { model: StockPricing };
-    stockPricingInclude.where = {
-      sessionTime: { [Op.gte]: minTargetDateTime, [Op.lte]: maxTargetDateTime },
+    let canClose = false;
+    // while (!canClose) {
+    currentTime.setSeconds(currentTime.getSeconds() + 4);
+    // reqData.maxTime = '10:10';
+    //currentTime.toString();
+    await this.init(reqData);
+
+    const mins = currentTime.getMinutes();
+    if (mins === 15) canClose = true;
+    // console.log(mins, currentTime.toString());
+    // }
+  }
+
+  async scrape() {
+    const stockOptions = {
+      limit: 50,
+      where: {
+        dhanId: { [Op.ne]: null },
+        isActive: true,
+        isInId: { [Op.ne]: null },
+      },
     };
-    stockPricingInclude.order = [['stockPricingList.id', 'DESC']];
-    stockPricingInclude.attributes = ['id', 'invest', 'risk'];
-    const include = [stockPricingInclude];
-    const stockListAttr = ['id', 'name'];
-    const stockListOptions = {
-      include,
-      where: { isActive: true },
-    };
+
     // Hit -> Query
     const targetList = await this.dbManager.getAll(
       StockList,
-      stockListAttr,
-      stockListOptions,
+      ['dhanId', 'id', 'name', 'isInId'],
+      stockOptions,
     );
 
-    const finalizedList = [];
+    // Preparation -> Query -> 2
+    const stockIds = targetList.map((el) => el.id);
+    const today = new Date();
+    today.setHours(0);
+    const liveDataAttr = [
+      [Sequelize.fn('max', Sequelize.col('id')), 'id'],
+      'stockId',
+    ];
+    let liveDataOptions: any = {
+      group: ['stockId'], // Grouping by stockId
+      where: {
+        createdAt: { [Op.gt]: today },
+        stockId: stockIds,
+      },
+    };
+    // Hit -> Query -> 2
+    let liveList = await this.dbManager.getAll(
+      LiveData,
+      liveDataAttr,
+      liveDataOptions,
+    );
+    const liveDataIds = liveList.map((el) => el.id);
+    liveDataOptions = {
+      where: { id: liveDataIds },
+    };
+    // Hit -> Query -> 3
+    liveList = await this.dbManager.getAll(
+      LiveData,
+      ['createdAt', 'price', 'stockId', 'total_buy', 'total_sell'],
+      liveDataOptions,
+    );
+
+    const promiseList = [];
     for (let index = 0; index < targetList.length; index++) {
-      try {
-        const targetData = targetList[index];
-        const stockPricingList = targetData.stockPricingList ?? [];
-        let score = 10;
-        stockPricingList.forEach((el, index) => {
-          if (index == 0 && el.risk > 50) score -= 2.5;
-          if (index == 0 && el.invest < 75) score -= 2.5;
-          if (el.risk > 75) score--;
-          else if (el.risk > 50) score -= 0.5;
-          else if (el.risk > 25) score -= 0.25;
-          if (el.invest < 25) score -= 0.5;
-          else if (el.invest < 50) score -= 0.25;
-        });
-        finalizedList.push({
-          name: targetData.name,
-          invest: stockPricingList[0].invest,
-          risk: stockPricingList[0].risk,
-          score,
-        });
-      } catch (error) {}
+      promiseList.push(this.dhan.getIsInData(targetList[index].isInId));
     }
 
-    finalizedList.sort((b, a) => a.score - b.score);
-    return finalizedList;
+    try {
+      const resultList = await Promise.all(promiseList);
+
+      const finalizedLiveList = [];
+      for (let index = 0; index < resultList.length; index++) {
+        const currentData = resultList[index];
+
+        const isInId = currentData.isin;
+        if (!isInId) continue;
+        const targetStockData = targetList.find((el) => el.isInId == isInId);
+        if (!targetStockData) continue;
+        const pastData = liveList.find(
+          (el) => el.stockId == targetStockData.id,
+        );
+
+        const creationData = {
+          // Price
+          price: currentData.Ltp,
+          prev_price: pastData?.price,
+          price_diff: pastData?.price
+            ? (currentData.Ltp * 100) / pastData?.price - 100
+            : null,
+          // Buy zone
+          total_buy: currentData.t_b_qt,
+          prev_total_buy: pastData?.total_buy,
+          buy_diff:
+            pastData?.total_buy != null && pastData?.total_buy != undefined
+              ? pastData?.total_buy == 0
+                ? 0
+                : (currentData.t_b_qt * 100) / pastData?.total_buy - 100
+              : null,
+          // Sell zone
+          total_sell: currentData.t_s_qty,
+          prev_total_sell: pastData?.total_sell,
+          sell_diff:
+            pastData?.total_sell != null && pastData?.total_sell != undefined
+              ? pastData?.total_sell == 0
+                ? 0
+                : (currentData.t_s_qty * 100) / pastData?.total_sell - 100
+              : null,
+          // Join
+          stockId: targetStockData.id,
+        };
+        finalizedLiveList.push(creationData);
+      }
+
+      await this.dbManager.bulkInsert(LiveData, finalizedLiveList);
+    } catch (error) {}
+  }
+
+  async fetchMarkets() {
+    const marketList = await this.dhan.topValue();
+    await this.dbManager.bulkInsert(MarketEntity, marketList);
+
+    return {};
   }
 }

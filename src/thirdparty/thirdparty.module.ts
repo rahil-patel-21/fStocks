@@ -5,11 +5,29 @@ import { APIService } from 'src/utils/api.service';
 import { YahooService } from './yahoo/yahoo.service';
 import { DhanController } from './dhan/dhan.controller';
 import { YahooController } from './yahoo/yahoo.controller';
+import { TelegramService } from './telegram/telegram.service';
 import { AngleOneService } from './angelOne/angle.one.service';
+import { TelegramController } from './telegram/telegram.controller';
 import { AngleOneController } from './angelOne/angle.one.controller';
+import { IndMoneyController } from './indmoney/indmoney.controller';
+import { IndMoneyService } from './indmoney/indmoney.service';
 
 @Module({
-  controllers: [AngleOneController, DhanController, YahooController],
-  providers: [AngleOneService, APIService, DhanService, YahooService],
+  controllers: [
+    AngleOneController,
+    DhanController,
+    IndMoneyController,
+    TelegramController,
+    YahooController,
+  ],
+  exports: [DhanService, IndMoneyService, TelegramService],
+  providers: [
+    AngleOneService,
+    APIService,
+    DhanService,
+    IndMoneyService,
+    TelegramService,
+    YahooService,
+  ],
 })
 export class ThirdPartyModule {}

@@ -2,9 +2,11 @@
 import * as express from 'express';
 import { AppModule } from './app.module';
 import { NestFactory } from '@nestjs/core';
+import { Env } from './constants/env.config';
 
 async function bootstrap() {
-  console.log('OKAY');
+  process.env.TZ = 'Asia/Kolkata';
+
   const app = await NestFactory.create(AppModule, {
     httpsOptions: null,
     cors: true,
@@ -13,7 +15,11 @@ async function bootstrap() {
   app.use(express.urlencoded({ limit: '100mb', extended: true }));
   app.enableCors();
 
-  await app.listen(3000);
+  await app.listen(Env.server.port);
+  console.log(
+    `App started running on port ${Env.server.port} at -> `,
+    new Date().toString(),
+  );
 }
 
 bootstrap();

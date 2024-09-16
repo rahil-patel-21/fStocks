@@ -1,9 +1,11 @@
 // Imports
+import { RawData } from '../tables/Raw.data';
 import { Env } from 'src/constants/env.config';
+import { LiveData } from '../tables/Live.data';
 import { Sequelize } from 'sequelize-typescript';
 import { StockList } from '../tables/Stock.list';
 import { StockPricing } from '../tables/Stock.pricing';
-import { ThirdPartyTrafficTable } from '../tables/Thirdparty.traffic.table';
+import { MarketEntity } from '../tables/Markets';
 
 export const DatabaseProvider = [
   {
@@ -13,12 +15,18 @@ export const DatabaseProvider = [
         define: { timestamps: true, freezeTableName: true },
         dialect: 'postgres',
         host: Env.database.host,
+        dialectOptions: {
+          ssl: {
+            require: true,
+            rejectUnauthorized: false,
+          },
+        },
         logging: false,
-        port: parseInt(Env.database.host, 10),
+        port: +Env.database.port,
         username: Env.database.username,
         password: Env.database.password,
         database: Env.database.name,
-        models: [StockList, StockPricing, ThirdPartyTrafficTable],
+        models: [LiveData, MarketEntity, RawData, StockList, StockPricing],
       });
       await sequelize.sync();
 

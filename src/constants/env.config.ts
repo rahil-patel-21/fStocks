@@ -12,4 +12,18 @@ export const Env = {
     password: process.env.DB_PASSWORD,
     ssl: process.env.DB_SSL,
   },
+
+  dhan: {
+    topValueUrl: process.env.DHAN_TOP_VALUES,
+  },
+
+  server: {
+    isCronEnabled: process.env.SERVER_CRON === 'TRUE',
+    port: process.env.SERVER_PORT ?? 3000,
+  },
+
+  telegram: {
+    devIds: process.env.TELEGRAM_DEV_IDS?.split(',') ?? [],
+    botTokens: process.env.TELEGRAM_BOT_TOKENS?.split(',') ?? [],
+  },
 };

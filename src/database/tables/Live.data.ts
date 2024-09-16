@@ -9,8 +9,10 @@ import {
 } from 'sequelize-typescript';
 import { StockList } from './Stock.list';
 
-@Table({})
-export class StockPricing extends Model<StockPricing> {
+@Table({
+  indexes: [{ fields: ['stockId'], using: 'BTREE' }],
+})
+export class LiveData extends Model<LiveData> {
   @Column({
     type: DataType.INTEGER,
     autoIncrement: true,
@@ -21,7 +23,7 @@ export class StockPricing extends Model<StockPricing> {
 
   @ForeignKey(() => StockList)
   @Column({
-    allowNull: false,
+    allowNull: true,
     comment: 'Primary key of Stock list table',
     type: DataType.INTEGER,
   })
@@ -36,67 +38,55 @@ export class StockPricing extends Model<StockPricing> {
 
   @Column({
     allowNull: false,
-    comment: 'Opening market value',
     type: DataType.DOUBLE,
   })
-  open: number;
-
-  @Column({
-    allowNull: false,
-    comment: 'Opening market value',
-    type: DataType.DOUBLE,
-  })
-  close: number;
+  price: number;
 
   @Column({
     allowNull: true,
-    comment: 'Risk to losing money',
     type: DataType.DOUBLE,
   })
-  risk: number;
+  prev_price: number;
 
   @Column({
-    allowNull: false,
-    comment:
-      'Difference of open and close with respective of opening market value',
+    allowNull: true,
     type: DataType.DOUBLE,
   })
-  closingDiff: number;
+  price_diff: number;
 
   @Column({
     allowNull: false,
-    comment: 'High market value during session',
     type: DataType.DOUBLE,
   })
-  high: number;
+  total_buy: number;
 
   @Column({
-    allowNull: false,
-    comment: 'Low market value during session',
+    allowNull: true,
     type: DataType.DOUBLE,
   })
-  low: number;
+  prev_total_buy: number;
 
   @Column({
-    allowNull: false,
-    comment: 'Time of the market session',
-    type: DataType.DATE,
-  })
-  sessionTime: Date;
-
-  @Column({
-    allowNull: false,
-    comment:
-      'Difference of high and low with respective of opening market value',
+    allowNull: true,
     type: DataType.DOUBLE,
   })
-  volatileDiff: number;
+  buy_diff: number;
 
   @Column({
     allowNull: false,
-    comment: 'Unique Id',
-    type: DataType.STRING(32),
-    unique: true,
+    type: DataType.DOUBLE,
   })
-  uniqueId: string;
+  total_sell: number;
+
+  @Column({
+    allowNull: true,
+    type: DataType.DOUBLE,
+  })
+  prev_total_sell: number;
+
+  @Column({
+    allowNull: true,
+    type: DataType.DOUBLE,
+  })
+  sell_diff: number;
 }
