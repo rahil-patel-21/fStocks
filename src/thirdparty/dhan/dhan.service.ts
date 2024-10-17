@@ -130,7 +130,7 @@ export class DhanService {
         SecIdxCode: -1,
         DayLevelIndicator: 1,
         ExpCode: -1,
-        ExpMonth: 'September',
+        ExpMonth: 'October',
         Instrument: 'OPT',
         Page_no: 1,
       },
