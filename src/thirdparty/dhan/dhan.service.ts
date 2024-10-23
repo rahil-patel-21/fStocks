@@ -4,10 +4,15 @@ import { Env } from 'src/constants/env.config';
 import { APIService } from 'src/utils/api.service';
 import { DHAN_API_GET_DATA_S } from 'src/constants/string';
 import { nDhanIsInData, nDhanSmartSearch } from 'src/constants/network';
+import { DatabaseManager } from 'src/database/database.manager';
+import { ChainEntity } from 'src/database/tables/Chain.data';
 
 @Injectable()
 export class DhanService {
-  constructor(private readonly api: APIService) {}
+  constructor(
+    private readonly api: APIService,
+    private readonly dbManager: DatabaseManager,
+  ) {}
 
   async getIsInId(shortName) {
     if (!shortName) throw new Error();
@@ -147,6 +152,24 @@ export class DhanService {
     });
 
     return finalizedList;
+  }
+
+  async optionChain() {
+    const body = {
+      Data: {
+        Seg: 0,
+        Sid: 13,
+        Exp: 1414175400,
+      },
+    };
+
+    const response = await this.api.post(Env.dhan.optChainUrl, body);
+    const targetData = response.data ?? {};
+
+    const creationData = { data: targetData, date: new Date() };
+    await this.dbManager.insert(ChainEntity, creationData);
+
+    return targetData;
   }
 
   async test() {

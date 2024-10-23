@@ -16,6 +16,11 @@ export class DhanController {
     return await this.service.topValue();
   }
 
+  @Get('optionChain')
+  async funOptionChain() {
+    return await this.service.optionChain();
+  }
+
   @Post('test')
   async funTest() {
     return await this.service.test();

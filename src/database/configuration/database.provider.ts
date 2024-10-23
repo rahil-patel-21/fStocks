@@ -6,6 +6,7 @@ import { Sequelize } from 'sequelize-typescript';
 import { StockList } from '../tables/Stock.list';
 import { StockPricing } from '../tables/Stock.pricing';
 import { MarketEntity } from '../tables/Markets';
+import { ChainEntity } from '../tables/Chain.data';
 
 export const DatabaseProvider = [
   {
@@ -26,7 +27,14 @@ export const DatabaseProvider = [
         username: Env.database.username,
         password: Env.database.password,
         database: Env.database.name,
-        models: [LiveData, MarketEntity, RawData, StockList, StockPricing],
+        models: [
+          ChainEntity,
+          LiveData,
+          MarketEntity,
+          RawData,
+          StockList,
+          StockPricing,
+        ],
       });
       await sequelize.sync();
 

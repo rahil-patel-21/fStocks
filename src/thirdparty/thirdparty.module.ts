@@ -11,6 +11,7 @@ import { TelegramController } from './telegram/telegram.controller';
 import { AngleOneController } from './angelOne/angle.one.controller';
 import { IndMoneyController } from './indmoney/indmoney.controller';
 import { IndMoneyService } from './indmoney/indmoney.service';
+import { DatabaseManager } from 'src/database/database.manager';
 
 @Module({
   controllers: [
@@ -24,6 +25,7 @@ import { IndMoneyService } from './indmoney/indmoney.service';
   providers: [
     AngleOneService,
     APIService,
+    DatabaseManager,
     DhanService,
     IndMoneyService,
     TelegramService,

@@ -15,6 +15,7 @@ export const Env = {
 
   dhan: {
     topValueUrl: process.env.DHAN_TOP_VALUES,
+    optChainUrl: process.env.DHAN_OPT_CHAIN,
   },
 
   server: {
