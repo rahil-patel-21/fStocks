@@ -17,8 +17,8 @@ export class DhanController {
   }
 
   @Get('optionChain')
-  async funOptionChain() {
-    return await this.service.optionChain();
+  async funOptionChain(@Query() query) {
+    return await this.service.optionChain(query);
   }
 
   @Post('test')

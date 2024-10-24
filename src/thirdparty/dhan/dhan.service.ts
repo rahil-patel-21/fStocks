@@ -154,13 +154,9 @@ export class DhanService {
     return finalizedList;
   }
 
-  async optionChain() {
+  async optionChain(reqData) {
     const body = {
-      Data: {
-        Seg: 0,
-        Sid: 13,
-        Exp: 1414780200,
-      },
+      Data: { Exp: +reqData.Exp, Seg: +reqData.Seg, Sid: +reqData.Sid },
     };
 
     const response = await this.api.post(Env.dhan.optChainUrl, body);

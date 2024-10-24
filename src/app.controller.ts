@@ -34,8 +34,19 @@ export class AppController {
   @Cron('*/5 * 9-14 * * 1-5')
   handle5SecCron() {
     if (Env.server.isCronEnabled) {
-      this.liveService.fetchMarkets();
-      this.dhan.optionChain();
+      this.liveService.fetchMarkets().catch((el) => {});
+      // Nifty 50
+      this.dhan
+        .optionChain({ Exp: 1414780200, Seg: 0, Sid: 13 })
+        .catch((el) => {});
+      // Bank Nifty
+      this.dhan
+        .optionChain({ Exp: 1414693800, Seg: 0, Sid: 25 })
+        .catch((el) => {});
+      // Fin nifty
+      this.dhan
+        .optionChain({ Exp: 1414607400, Seg: 0, Sid: 27 })
+        .catch((el) => {});
     }
   }
 }
