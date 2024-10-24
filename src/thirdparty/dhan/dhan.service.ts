@@ -159,12 +159,36 @@ export class DhanService {
       Data: {
         Seg: 0,
         Sid: 13,
-        Exp: 1414175400,
+        Exp: 1414780200,
       },
     };
 
     const response = await this.api.post(Env.dhan.optChainUrl, body);
     const targetData = response.data ?? {};
+    delete targetData.fl;
+    delete targetData.exch;
+    delete targetData.oinst;
+    delete targetData.finst;
+    const sltp = targetData.sltp;
+    const oc = targetData.oc ?? {};
+    for (const key in oc) {
+      const diff = Math.abs(+key - sltp);
+      if (diff > 800) {
+        delete oc[key];
+        continue;
+      }
+      delete oc[key]['ce'].btyp;
+      delete oc[key]['pe'].btyp;
+      delete oc[key]['ce'].sym;
+      delete oc[key]['pe'].sym;
+      delete oc[key]['ce'].BuiltupName;
+      delete oc[key]['pe'].BuiltupName;
+      delete oc[key]['ce'].otype;
+      delete oc[key]['pe'].otype;
+      delete oc[key]['ce'].bid; // Same value as ltp
+      delete oc[key]['pe'].bid; // Same value as ltp
+    }
+    targetData.oc = oc;
 
     const creationData = { data: targetData, date: new Date() };
     await this.dbManager.insert(ChainEntity, creationData);
