@@ -1,4 +1,5 @@
 // Imports
+import { OLHCEntity } from '../tables/OLHC';
 import { RawData } from '../tables/Raw.data';
 import { Env } from 'src/constants/env.config';
 import { LiveData } from '../tables/Live.data';
@@ -25,6 +26,7 @@ export const DatabaseProvider = [
           ChainEntity,
           LiveData,
           MarketEntity,
+          OLHCEntity,
           RawData,
           StockList,
           StockPricing,

@@ -6,6 +6,7 @@ import { DHAN_API_GET_DATA_S } from 'src/constants/string';
 import { nDhanIsInData, nDhanSmartSearch } from 'src/constants/network';
 import { DatabaseManager } from 'src/database/database.manager';
 import { ChainEntity } from 'src/database/tables/Chain.data';
+import { OLHCEntity } from 'src/database/tables/OLHC';
 
 @Injectable()
 export class DhanService {
@@ -1516,6 +1517,19 @@ export class DhanService {
         console.log({ prediction });
       }
     }
+  }
+
+  async syncOLHC(reqData) {
+    const date = reqData.date;
+    const sec_id = reqData.sec_id;
+    const targetData = reqData.targetData ?? {};
+
+    const creationData = {
+      data: targetData,
+      date,
+      sec_id,
+    };
+    return await this.dbManager.insert(OLHCEntity, creationData);
   }
 
   trendPrediction(list, targetTime) {

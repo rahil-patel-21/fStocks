@@ -1,6 +1,6 @@
 // Imports
 import { DhanService } from './dhan.service';
-import { Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
 
 @Controller('dhan')
 export class DhanController {
@@ -24,5 +24,10 @@ export class DhanController {
   @Post('test')
   async funTest() {
     return await this.service.test();
+  }
+
+  @Post('syncOLHC')
+  async funSyncOLHC(@Body() body) {
+    return await this.service.syncOLHC(body);
   }
 }
