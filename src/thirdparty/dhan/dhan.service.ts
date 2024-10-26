@@ -165,11 +165,14 @@ export class DhanService {
     delete targetData.exch;
     delete targetData.oinst;
     delete targetData.finst;
+    delete targetData.explst;
+    delete targetData.sinst;
+    delete targetData.s_xch;
     const sltp = targetData.sltp;
     const oc = targetData.oc ?? {};
     for (const key in oc) {
       const diff = Math.abs(+key - sltp);
-      if (diff > 800) {
+      if (diff > 500) {
         delete oc[key];
         continue;
       }
@@ -183,6 +186,11 @@ export class DhanService {
       delete oc[key]['pe'].otype;
       delete oc[key]['ce'].bid; // Same value as ltp
       delete oc[key]['pe'].bid; // Same value as ltp
+      delete oc[key].mploss;
+      delete oc[key].mploss;
+      delete oc[key].exptype;
+      oc[key]['ce'].v_pchng = Math.floor(oc[key]['ce'].v_pchng);
+      oc[key]['pe'].v_pchng = Math.floor(oc[key]['pe'].v_pchng);
     }
     targetData.oc = oc;
 

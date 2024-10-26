@@ -16,12 +16,6 @@ export const DatabaseProvider = [
         define: { timestamps: true, freezeTableName: true },
         dialect: 'postgres',
         host: Env.database.host,
-        dialectOptions: {
-          ssl: {
-            require: true,
-            rejectUnauthorized: false,
-          },
-        },
         logging: false,
         port: +Env.database.port,
         username: Env.database.username,
