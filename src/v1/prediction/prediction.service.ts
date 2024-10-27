@@ -98,20 +98,43 @@ export class PredictionService {
         const highSupportToCloseDiff = (close * 100) / highSupport - 100;
         const highToCloseDiff = (close * 100) / high - 100;
         const volume = targetData['v'][index];
+        const low = targetData['l'][index];
+        const lowToOpenDiff = (open * 100) / low - 100;
         let isBullish = true;
+        let reason = 'It is bullish';
 
         if (openToCloseDiff <= 0.25) {
           isBullish = false;
+          reason = 'openToCloseDiff is less than or eq to 0.25';
         } else if (avgToCloseDiff <= 0.35) {
           isBullish = false;
+          reason = 'avgToCloseDiff is less than or eq to 0.35';
         } else if (firstOpenToCloseDiff <= 2.5) {
           isBullish = false;
+          reason = 'firstOpenToCloseDiff is less than or eq to 2.5';
         } else if (volume <= 50000) {
           isBullish = false;
-        } else if (highSupportToCloseDiff <= 0.1) {
+          reason = 'volume is less than or eq to 50k';
+        }
+        //  else if (highSupportToCloseDiff <= 0.1) {
+        //   isBullish = false;
+        //   reason = 'highSupportToCloseDiff is less than or eq to 0.1';
+        // }
+        else if (highToCloseDiff <= -2) {
           isBullish = false;
-        } else if (highToCloseDiff <= -2) {
+          reason = 'highToCloseDiff is less than or eq to -2';
+        } else if (lowToOpenDiff >= 2) {
           isBullish = false;
+          reason = 'lowToOpenDiff is greater than or eq to 2';
+        } else if (
+          new Date(timeStr).getHours() == 9 &&
+          new Date(timeStr).getMinutes() <= 30
+        ) {
+          isBullish = false;
+          reason = 'Too early to get into market';
+        } else if (new Date(timeStr).getHours() >= 14) {
+          isBullish = false;
+          reason = 'Too late to get into market';
         }
 
         if (isBullish) {
@@ -120,11 +143,13 @@ export class PredictionService {
           const prevOpenToCloseDiff = (prevClose * 100) / prevOpen - 100;
           if (prevOpenToCloseDiff <= 0) {
             isBullish = false;
+            reason = 'prevOpenToCloseDiff is less than or eq to 0';
           }
         }
 
         return {
           isBullish,
+          reason,
           close,
           open,
           volume,
@@ -133,9 +158,8 @@ export class PredictionService {
           firstOpenToCloseDiff,
           highSupportToCloseDiff,
           highToCloseDiff,
+          lowToOpenDiff,
         };
-
-        break;
       }
 
       totalValue += close;
