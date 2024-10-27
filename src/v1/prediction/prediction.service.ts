@@ -74,4 +74,74 @@ export class PredictionService {
 
     console.log({ diffFromLast5, targetData });
   }
+
+  isBullish(targetData, time) {
+    let firstOpen = 0;
+    let totalValue = 0;
+    let highSupport = 0;
+    for (let index = 0; index < targetData['c'].length; index++) {
+      const timeStr = targetData['Time'][index];
+      const open = targetData['o'][index];
+      const close = targetData['c'][index];
+      const high = targetData['h'][index];
+
+      if (index == 0) {
+        firstOpen = open;
+      }
+
+      const isTargetEl = timeStr.includes(time.substring(0, 19));
+      if (isTargetEl) {
+        const openToCloseDiff = (close * 100) / open - 100;
+        const avgValue = totalValue / (index + 1);
+        const avgToCloseDiff = (close * 100) / avgValue - 100;
+        const firstOpenToCloseDiff = (close * 100) / firstOpen - 100;
+        const highSupportToCloseDiff = (close * 100) / highSupport - 100;
+        const highToCloseDiff = (close * 100) / high - 100;
+        const volume = targetData['v'][index];
+        let isBullish = true;
+
+        if (openToCloseDiff <= 0.25) {
+          isBullish = false;
+        } else if (avgToCloseDiff <= 0.35) {
+          isBullish = false;
+        } else if (firstOpenToCloseDiff <= 2.5) {
+          isBullish = false;
+        } else if (volume <= 50000) {
+          isBullish = false;
+        } else if (highSupportToCloseDiff <= 0.1) {
+          isBullish = false;
+        } else if (highToCloseDiff <= -2) {
+          isBullish = false;
+        }
+
+        if (isBullish) {
+          const prevClose = targetData['c'][index - 1];
+          const prevOpen = targetData['o'][index - 1];
+          const prevOpenToCloseDiff = (prevClose * 100) / prevOpen - 100;
+          if (prevOpenToCloseDiff <= 0) {
+            isBullish = false;
+          }
+        }
+
+        return {
+          isBullish,
+          close,
+          open,
+          volume,
+          openToCloseDiff,
+          avgToCloseDiff,
+          firstOpenToCloseDiff,
+          highSupportToCloseDiff,
+          highToCloseDiff,
+        };
+
+        break;
+      }
+
+      totalValue += close;
+      if (high > highSupport) {
+        highSupport = high;
+      }
+    }
+  }
 }

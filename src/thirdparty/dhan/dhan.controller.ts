@@ -30,4 +30,9 @@ export class DhanController {
   async funSyncOLHC(@Body() body) {
     return await this.service.syncOLHC(body);
   }
+
+  @Get('getOLHC')
+  async funGetOLHC(@Query() query) {
+    return await this.service.getOLHC(query);
+  }
 }

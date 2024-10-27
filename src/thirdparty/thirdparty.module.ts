@@ -12,6 +12,7 @@ import { AngleOneController } from './angelOne/angle.one.controller';
 import { IndMoneyController } from './indmoney/indmoney.controller';
 import { IndMoneyService } from './indmoney/indmoney.service';
 import { DatabaseManager } from 'src/database/database.manager';
+import { PredictionService } from 'src/v1/prediction/prediction.service';
 
 @Module({
   controllers: [
@@ -28,6 +29,7 @@ import { DatabaseManager } from 'src/database/database.manager';
     DatabaseManager,
     DhanService,
     IndMoneyService,
+    PredictionService,
     TelegramService,
     YahooService,
   ],

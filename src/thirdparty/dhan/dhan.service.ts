@@ -7,12 +7,14 @@ import { nDhanIsInData, nDhanSmartSearch } from 'src/constants/network';
 import { DatabaseManager } from 'src/database/database.manager';
 import { ChainEntity } from 'src/database/tables/Chain.data';
 import { OLHCEntity } from 'src/database/tables/OLHC';
+import { PredictionService } from 'src/v1/prediction/prediction.service';
 
 @Injectable()
 export class DhanService {
   constructor(
     private readonly api: APIService,
     private readonly dbManager: DatabaseManager,
+    private readonly prediction: PredictionService,
   ) {}
 
   async getIsInId(shortName) {
@@ -1523,13 +1525,43 @@ export class DhanService {
     const date = reqData.date;
     const sec_id = reqData.sec_id;
     const targetData = reqData.targetData ?? {};
+    const interval = reqData.interval;
 
     const creationData = {
       data: targetData,
       date,
+      interval,
       sec_id,
     };
     return await this.dbManager.insert(OLHCEntity, creationData);
+  }
+
+  async getOLHC(reqData) {
+    const sec_id = +reqData.sec_id;
+    const interval = reqData.interval;
+    const date = reqData.date;
+    const prediction_time = reqData.prediction_time;
+    const needPrediction = reqData.prediction == 'true' && prediction_time;
+
+    const options = { where: { sec_id, interval, date } };
+    const existingData = await this.dbManager.getOne(
+      OLHCEntity,
+      ['data'],
+      options,
+    );
+    if (existingData) {
+      if (needPrediction) {
+        const predictionData = this.prediction.isBullish(
+          existingData.data,
+          prediction_time,
+        );
+        console.log('predictionData', predictionData);
+        existingData.data.predictionData = predictionData;
+      }
+      return existingData.data;
+    }
+
+    return {};
   }
 
   trendPrediction(list, targetTime) {

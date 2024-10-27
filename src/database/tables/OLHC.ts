@@ -20,4 +20,10 @@ export class OLHCEntity extends Model<OLHCEntity> {
     type: DataType.DATE,
   })
   date: Date;
+
+  @Column({
+    allowNull: false,
+    type: DataType.STRING(8),
+  })
+  interval: string;
 }
