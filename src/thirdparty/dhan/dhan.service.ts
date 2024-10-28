@@ -1551,16 +1551,14 @@ export class DhanService {
         dhanId: sec_id,
         targetDate: today,
       });
-      if (needPrediction) {
-        const prediction_time = liveResponse['Time'][
-          liveResponse['Time'].length - 1
-        ].substring(0, 19);
-        const predictionResult = this.prediction.isBullish(
-          liveResponse,
-          prediction_time,
-        );
-        console.log({ predictionResult });
-      }
+      const prediction_time = liveResponse['Time'][
+        liveResponse['Time'].length - 1
+      ].substring(0, 19);
+      const predictionResult = this.prediction.isBullish(
+        liveResponse,
+        prediction_time,
+      );
+      console.log({ predictionResult });
       return liveResponse;
     }
 
