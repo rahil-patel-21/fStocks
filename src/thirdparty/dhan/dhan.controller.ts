@@ -35,4 +35,9 @@ export class DhanController {
   async funGetOLHC(@Query() query) {
     return await this.service.getOLHC(query);
   }
+
+  @Post('liveMarketPrediction')
+  async funLiveMarketPrediction() {
+    return await this.service.liveMarketPrediction();
+  }
 }

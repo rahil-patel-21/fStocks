@@ -34,6 +34,7 @@ export class AppController {
   @Cron('*/5 * 9-14 * * 1-5')
   handle5SecCron() {
     if (Env.server.isCronEnabled) {
+      this.dhan.liveMarketPrediction().catch((el) => {});
       this.liveService.fetchMarkets().catch((el) => {});
       // Nifty 50
       this.dhan

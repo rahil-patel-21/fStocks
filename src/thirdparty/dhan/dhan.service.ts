@@ -63,14 +63,14 @@ export class DhanService {
       // Preparation -> API
       const body = {
         EXCH: 'NSE',
-        SEG: 'E',
-        INST: 'EQUITY',
+        SEG: 'D',
+        INST: 'OPTIDX',
         SEC_ID: reqData.dhanId,
         START: Math.round(startDate.getTime() / 1000),
         START_TIME: startDate.toString(),
         END: Math.round(endDate.getTime() / 1000),
         END_TIME: endDate.toString(),
-        INTERVAL: '15S',
+        INTERVAL: reqData.interval ?? '30S',
       };
 
       const url = DHAN_API_GET_DATA_S;
@@ -78,6 +78,8 @@ export class DhanService {
       // Hit -> API
       const response = await this.api.post(url, body, headers);
       const res_data = response?.data;
+      return res_data;
+      console.log(res_data);
       let open = res_data?.o;
       let close = res_data?.c;
       let time = res_data?.t;
@@ -1543,6 +1545,15 @@ export class DhanService {
     const prediction_time = reqData.prediction_time;
     const needPrediction = reqData.prediction == 'true' && prediction_time;
 
+    const today = new Date().toJSON().substring(0, 10);
+    if (today == date && new Date().getHours() <= 15) {
+      const liveResponse = await this.getData({
+        dhanId: sec_id,
+        targetDate: today,
+      });
+      return liveResponse;
+    }
+
     const options = { where: { sec_id, interval, date } };
     const existingData = await this.dbManager.getOne(
       OLHCEntity,
@@ -1559,9 +1570,32 @@ export class DhanService {
         existingData.data.predictionData = predictionData;
       }
       return existingData.data;
+    } else {
+      return await this.getData({ dhanId: sec_id, targetDate: date });
+    }
+  }
+
+  async liveMarketPrediction() {
+    const targetData = {
+      '49007': 'NIFTY 31 OCT 24100 PUT',
+      '49009': 'NIFTY 31 OCT 24150 PUT',
+    };
+
+    const date = new Date().toJSON().substring(0, 10);
+    const promiseList = [];
+    for (const key in targetData) {
+      promiseList.push(
+        this.getOLHC({
+          date,
+          sec_id: key,
+          interval: '30S',
+          prediction: 'true',
+        }),
+      );
     }
 
-    return {};
+    const promiseResult = await Promise.all(promiseList);
+    console.log(promiseResult);
   }
 
   trendPrediction(list, targetTime) {
