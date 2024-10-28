@@ -1579,6 +1579,8 @@ export class DhanService {
     const targetData = {
       '49007': 'NIFTY 31 OCT 24100 PUT',
       '49009': 'NIFTY 31 OCT 24150 PUT',
+      '49014': 'NIFTY 31 OCT 24300 CALL',
+      '49016': 'NIFTY 31 OCT 24350 CALL',
     };
 
     const date = new Date().toJSON().substring(0, 10);
