@@ -1558,7 +1558,7 @@ export class DhanService {
         liveResponse,
         prediction_time,
       );
-      console.log({ predictionResult });
+      if (predictionResult.isBullish) console.log({ predictionResult });
       return liveResponse;
     }
 
@@ -1604,8 +1604,7 @@ export class DhanService {
       );
     }
 
-    const promiseResult = await Promise.all(promiseList);
-    console.log(promiseResult);
+    await Promise.all(promiseList);
   }
 
   trendPrediction(list, targetTime) {
