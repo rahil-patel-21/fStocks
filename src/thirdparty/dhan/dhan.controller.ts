@@ -40,4 +40,15 @@ export class DhanController {
   async funLiveMarketPrediction() {
     return await this.service.liveMarketPrediction();
   }
+
+  @Get('marketDepth')
+  async funMarketDepth(@Query() query) {
+    return await this.service.marketDepth(query);
+  }
+
+  @Post('watchMarketDepth')
+  async funWatchMarketDepth() {
+    this.service.watchMarketDepth();
+    return {};
+  }
 }
