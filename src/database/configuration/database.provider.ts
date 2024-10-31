@@ -8,6 +8,7 @@ import { StockList } from '../tables/Stock.list';
 import { StockPricing } from '../tables/Stock.pricing';
 import { MarketEntity } from '../tables/Markets';
 import { ChainEntity } from '../tables/Chain.data';
+import { MarketDepth } from '../tables/MarketDepth';
 
 export const DatabaseProvider = [
   {
@@ -26,6 +27,7 @@ export const DatabaseProvider = [
           ChainEntity,
           LiveData,
           MarketEntity,
+          MarketDepth,
           OLHCEntity,
           RawData,
           StockList,

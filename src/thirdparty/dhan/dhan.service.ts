@@ -8,11 +8,15 @@ import { DatabaseManager } from 'src/database/database.manager';
 import { ChainEntity } from 'src/database/tables/Chain.data';
 import { OLHCEntity } from 'src/database/tables/OLHC';
 import { PredictionService } from 'src/v1/prediction/prediction.service';
+import { CryptService } from 'src/utils/crypt.service';
+import { MarketDepth } from 'src/database/tables/MarketDepth';
+import { kWatchable_Derivatives } from 'src/constants/objects';
 
 @Injectable()
 export class DhanService {
   constructor(
     private readonly api: APIService,
+    private readonly crypt: CryptService,
     private readonly dbManager: DatabaseManager,
     private readonly prediction: PredictionService,
   ) {}
@@ -79,7 +83,7 @@ export class DhanService {
       const response = await this.api.post(url, body, headers);
       const res_data = response?.data;
       return res_data;
-      console.log(res_data);
+
       let open = res_data?.o;
       let close = res_data?.c;
       let time = res_data?.t;
@@ -1766,5 +1770,101 @@ export class DhanService {
         };
       }
     }
+  }
+
+  async marketDepth(reqData) {
+    const body = {
+      Data: {
+        Seg: 2,
+        Secid: +reqData.sec_id,
+      },
+    };
+    const headers = {
+      origin: 'https://web.dhan.co',
+      referer: 'https://web.dhan.co/',
+    };
+
+    const response = await this.api.post(
+      'https://scanx.dhan.co/scanx/rtscrdt',
+      body,
+      headers,
+    );
+    // Invalid response
+    if (!response.data) {
+      return {};
+    }
+
+    const time = this.parseDate(response.data?.ltt).toJSON();
+    const submbp = response.data?.submbp ?? [];
+
+    let current_buy_quantity = 0;
+    let current_sell_quantity = 0;
+    submbp.forEach((el) => {
+      current_buy_quantity += el?.bqt ?? 0;
+      current_sell_quantity += el?.sqt ?? 0;
+    });
+    const current_buy_dominance =
+      (current_buy_quantity * 100) /
+      (current_buy_quantity + current_sell_quantity);
+    const total_buy_dominance =
+      (response.data?.t_b_qt * 100) /
+      (response.data?.t_b_qt + response.data?.t_s_qty);
+    const hash = this.crypt.generateMD5Hash(
+      JSON.stringify(submbp) + time.substring(0, 10),
+    );
+
+    const data = response.data ?? {};
+
+    const creationData = {
+      sec_id: +reqData.sec_id,
+      time,
+
+      current_buy_quantity,
+      current_sell_quantity,
+      current_buy_dominance: this.roundNumber(current_buy_dominance),
+
+      total_buy_quantity: response.data?.t_b_qt,
+      total_sell_quantity: response.data?.t_s_qty,
+      total_buy_dominance: this.roundNumber(total_buy_dominance),
+
+      vol: response.data.vol,
+      Ltp: response.data.Ltp,
+      high_movement: response.data.hg,
+      low_movement: response.data.lo,
+      movement_towards_high: this.roundNumber(
+        (response.data.Ltp * 100) / response.data.hg,
+      ),
+
+      open_interest: data.oi,
+      open_interest_change: data.oi_ch,
+      open_interest_p_ch: this.roundNumber(data.oi_p_ch),
+      hash,
+    };
+    return creationData;
+  }
+
+  parseDate(dateString: string): Date {
+    const [day, month, year, hours, minutes, seconds] = dateString
+      .match(/\d+/g)
+      .map(Number);
+    return new Date(year, month - 1, day, hours, minutes, seconds);
+  }
+
+  roundNumber(number) {
+    return Math.round(number * 100) / 100;
+  }
+
+  async watchMarketDepth() {
+    const list = [];
+    for (let index = 0; index < kWatchable_Derivatives.length; index++) {
+      const sec_id = kWatchable_Derivatives[index].sec_id;
+      list.push(this.marketDepth({ sec_id }));
+    }
+
+    const promiseList = (await Promise.all(list)).filter((el) => el.sec_id);
+    this.dbManager.bulkInsert(MarketDepth, promiseList);
+
+    // Recursive
+    return this.watchMarketDepth();
   }
 }

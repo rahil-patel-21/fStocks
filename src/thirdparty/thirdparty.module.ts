@@ -13,6 +13,7 @@ import { IndMoneyController } from './indmoney/indmoney.controller';
 import { IndMoneyService } from './indmoney/indmoney.service';
 import { DatabaseManager } from 'src/database/database.manager';
 import { PredictionService } from 'src/v1/prediction/prediction.service';
+import { CryptService } from 'src/utils/crypt.service';
 
 @Module({
   controllers: [
@@ -26,6 +27,7 @@ import { PredictionService } from 'src/v1/prediction/prediction.service';
   providers: [
     AngleOneService,
     APIService,
+    CryptService,
     DatabaseManager,
     DhanService,
     IndMoneyService,
