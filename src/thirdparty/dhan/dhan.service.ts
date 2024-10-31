@@ -1544,23 +1544,25 @@ export class DhanService {
     const date = reqData.date;
     const prediction_time = reqData.prediction_time;
     const needPrediction = reqData.prediction == 'true' && prediction_time;
+    const fullDayPrediction =
+      reqData.fullDayPrediction == 'true' && needPrediction;
 
     const today = new Date().toJSON().substring(0, 10);
-    if (today == date && new Date().getHours() <= 15) {
-      const liveResponse = await this.getData({
-        dhanId: sec_id,
-        targetDate: today,
-      });
-      const prediction_time = liveResponse['Time'][
-        liveResponse['Time'].length - 1
-      ].substring(0, 19);
-      const predictionResult = this.prediction.isBullish(
-        liveResponse,
-        prediction_time,
-      );
-      if (predictionResult.isBullish) console.log({ predictionResult });
-      return liveResponse;
-    }
+    // if (today == date && new Date().getHours() <= 15) {
+    //   const liveResponse = await this.getData({
+    //     dhanId: sec_id,
+    //     targetDate: today,
+    //   });
+    //   const prediction_time = liveResponse['Time'][
+    //     liveResponse['Time'].length - 1
+    //   ].substring(0, 19);
+    //   const predictionResult = this.prediction.isBullish(
+    //     liveResponse,
+    //     prediction_time,
+    //   );
+    //   if (predictionResult.isBullish) console.log({ predictionResult });
+    //   return liveResponse;
+    // }
 
     const options = { where: { sec_id, interval, date } };
     const existingData = await this.dbManager.getOne(
@@ -1568,14 +1570,32 @@ export class DhanService {
       ['data'],
       options,
     );
+
     if (existingData) {
-      if (needPrediction) {
+      if (needPrediction && !fullDayPrediction) {
         const predictionData = this.prediction.isBullish(
           existingData.data,
           prediction_time,
         );
-        console.log('predictionData', predictionData);
-        existingData.data.predictionData = predictionData;
+        return predictionData;
+      } else if (fullDayPrediction) {
+        const finalizedList = [];
+        for (let index = 0; index < existingData.data.c.length; index++) {
+          const data = existingData.data ?? {};
+          const prediction = this.prediction.isBullish(
+            data,
+            data['Time'][index],
+          );
+          finalizedList.push({
+            time: data['Time'][index],
+            prediction: prediction?.isBullish,
+            reason: prediction?.reason,
+            ...prediction,
+          });
+        }
+
+        const rows = finalizedList.filter((el) => el.prediction == true);
+        return { count: rows.length, rows };
       }
       return existingData.data;
     } else {
@@ -1591,6 +1611,7 @@ export class DhanService {
       '49016': 'NIFTY 31 OCT 24350 CALL',
       '40563': 'MIDCPNIFTY 28 OCT 12350 CALL',
       '39522': 'FINNIFTY 29 OCT 24000 CALL',
+      '43090': 'BANKNIFTY 30 OCT 50700 CALL',
     };
 
     const date = new Date().toJSON().substring(0, 10);

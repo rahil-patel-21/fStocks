@@ -42,7 +42,6 @@ export class PredictionService {
           const targetList = liveList.filter((el) => el.id <= liveData.id);
           const isProfitable = this.isProfitable(targetList, liveData);
           if (isProfitable === false) continue;
-          console.log({ isProfitable });
 
           if (!isProfitable) break;
           break;
@@ -71,8 +70,6 @@ export class PredictionService {
     );
     const diffFromLast5 = (targetData.price * 100) / maxObject.price - 100;
     if (diffFromLast5 < 0) return false;
-
-    console.log({ diffFromLast5, targetData });
   }
 
   isBullish(targetData, time) {
@@ -95,8 +92,7 @@ export class PredictionService {
         const avgValue = totalValue / (index + 1);
         const avgToCloseDiff = (close * 100) / avgValue - 100;
         const firstOpenToCloseDiff = (close * 100) / firstOpen - 100;
-        const highSupportToCloseDiff = (close * 100) / highSupport - 100;
-        const highToCloseDiff = (close * 100) / high - 100;
+        const highToCloseDiff = Math.abs((close * 100) / high - 100);
         const volume = targetData['v'][index];
         const low = targetData['l'][index];
         const lowToOpenDiff = (open * 100) / low - 100;
@@ -106,33 +102,40 @@ export class PredictionService {
         if (openToCloseDiff <= 0.25) {
           isBullish = false;
           reason = 'openToCloseDiff is less than or eq to 0.25';
-        } else if (avgToCloseDiff <= 0.35) {
+        } else if (openToCloseDiff <= 0.4 && volume <= 20000) {
           isBullish = false;
-          reason = 'avgToCloseDiff is less than or eq to 0.35';
-        } else if (firstOpenToCloseDiff <= 2.5) {
+          reason =
+            'openToCloseDiff is less than or eq to 0.40 with less volume momentum';
+        } else if (openToCloseDiff >= 0.75 && volume <= 20000) {
           isBullish = false;
-          reason = 'firstOpenToCloseDiff is less than or eq to 2.5';
-        } else if (volume <= 50000) {
+          reason =
+            'openToCloseDiff is more than or eq to 1.00 with less volume momentum';
+        } else if (avgToCloseDiff <= -20) {
           isBullish = false;
-          reason = 'volume is less than or eq to 50k';
-        }
-        //  else if (highSupportToCloseDiff <= 0.1) {
-        //   isBullish = false;
-        //   reason = 'highSupportToCloseDiff is less than or eq to 0.1';
-        // }
-        else if (highToCloseDiff <= -2) {
+          reason = 'avgToCloseDiff is less than or eq to -20';
+        } else if (firstOpenToCloseDiff <= -50) {
           isBullish = false;
-          reason = 'highToCloseDiff is less than or eq to -2';
+          reason = 'firstOpenToCloseDiff is less than or eq to -50';
+        } else if (volume < 1000) {
+          isBullish = false;
+          reason = 'volume is less than or eq to 1k';
+        } else if (highToCloseDiff >= 0.3) {
+          isBullish = false;
+          reason = 'highToCloseDiff is greater than or eq to 3';
         } else if (lowToOpenDiff >= 2) {
           isBullish = false;
           reason = 'lowToOpenDiff is greater than or eq to 2';
+        } else if (lowToOpenDiff >= 1 && highToCloseDiff < lowToOpenDiff) {
+          isBullish = false;
+          reason =
+            'lowToOpenDiff is greater than highToCloseDiff which is bearish trend';
         } else if (
           new Date(timeStr).getHours() == 9 &&
           new Date(timeStr).getMinutes() <= 30
         ) {
           isBullish = false;
           reason = 'Too early to get into market';
-        } else if (new Date(timeStr).getHours() >= 14) {
+        } else if (new Date(timeStr).getHours() >= 15) {
           isBullish = false;
           reason = 'Too late to get into market';
         }
@@ -141,9 +144,39 @@ export class PredictionService {
           const prevClose = targetData['c'][index - 1];
           const prevOpen = targetData['o'][index - 1];
           const prevOpenToCloseDiff = (prevClose * 100) / prevOpen - 100;
+          const prevCloseToOpenDiff = (prevClose * 100) / open - 100;
           if (prevOpenToCloseDiff <= 0) {
             isBullish = false;
             reason = 'prevOpenToCloseDiff is less than or eq to 0';
+          } else if (prevCloseToOpenDiff > 0.1) {
+            isBullish = false;
+            reason = 'prev close was above current one';
+          }
+        }
+
+        if (isBullish) {
+          let prevMaxHigh = 0;
+          let isPrevHighIsRisky = false;
+          for (let i = 0; i < targetData['c'].length; i++) {
+            if (i < index - 5 || i >= index) continue;
+
+            const prevClose = targetData['c'][i];
+            const prevHigh = targetData['h'][i];
+            const prevHighToPrevClose = Math.abs(
+              (prevClose * 100) / prevHigh - 100,
+            );
+            if (prevHighToPrevClose > 0.35) {
+              isPrevHighIsRisky = true;
+            }
+
+            if (prevHigh > prevMaxHigh) prevMaxHigh = prevHigh;
+          }
+          if (prevMaxHigh >= close) {
+            isBullish = false;
+            reason = 'Last 5 candles are having higher high values';
+          } else if (isPrevHighIsRisky) {
+            isBullish = false;
+            reason = 'One of Last 5 candle is having risky high closings';
           }
         }
 
@@ -156,7 +189,7 @@ export class PredictionService {
           openToCloseDiff,
           avgToCloseDiff,
           firstOpenToCloseDiff,
-          highSupportToCloseDiff,
+          firstOpen,
           highToCloseDiff,
           lowToOpenDiff,
         };
