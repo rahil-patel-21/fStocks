@@ -11,6 +11,8 @@ import { PredictionService } from 'src/v1/prediction/prediction.service';
 import { CryptService } from 'src/utils/crypt.service';
 import { MarketDepth } from 'src/database/tables/MarketDepth';
 import { kWatchable_Derivatives } from 'src/constants/objects';
+import { error } from 'console';
+import { GainerEntity } from 'src/database/tables/Gainer.data';
 
 @Injectable()
 export class DhanService {
@@ -1775,7 +1777,7 @@ export class DhanService {
   async marketDepth(reqData) {
     const body = {
       Data: {
-        Seg: 2,
+        Seg: 1,
         Secid: +reqData.sec_id,
       },
     };
@@ -1784,13 +1786,13 @@ export class DhanService {
       referer: 'https://web.dhan.co/',
     };
 
-    const response = await this.api.post(
-      'https://scanx.dhan.co/scanx/rtscrdt',
-      body,
-      headers,
-    );
+    const response = await this.api
+      .post('https://scanx.dhan.co/scanx/rtscrdt', body, headers, null, {}, 500)
+      .catch((err) => {
+        console.log({ err });
+      });
     // Invalid response
-    if (!response.data) {
+    if (!response?.data) {
       return {};
     }
 
@@ -1855,16 +1857,67 @@ export class DhanService {
   }
 
   async watchMarketDepth() {
+    try {
+      const list = [];
+      for (let index = 0; index < kWatchable_Derivatives.length; index++) {
+        const sec_id = kWatchable_Derivatives[index].sec_id;
+        list.push(this.marketDepth({ sec_id }));
+      }
+
+      const promiseList = (await Promise.all(list)).filter((el) => el.sec_id);
+
+      // Recursive
+      console.log('STPRING', new Date());
+      this.dbManager.bulkInsert(MarketDepth, promiseList).catch((_) => {
+        console.log(error);
+      });
+      return this.watchMarketDepth();
+    } catch (error) {
+      console.log('er');
+    }
+  }
+
+  async gainers() {
+    const url = Env.dhan.topGainersUrl;
+    const body = {
+      Data: {
+        Seg: 1,
+        SecIdxCode: 700,
+        Count: 250,
+        TypeFlag: 'G',
+        DayLevelIndicator: 1,
+        ExpCode: -1,
+        Instrument: 'EQUITY',
+      },
+    };
+
+    const response = await this.api.post(url, body, null, null, {}, 500);
+    if (!response?.data) return {};
+    const rawList = (response.data ?? []).filter((el) => el.pchng > 1);
+
+    const sid_ids = rawList.map((el) => el.sid);
     const list = [];
-    for (let index = 0; index < kWatchable_Derivatives.length; index++) {
-      const sec_id = kWatchable_Derivatives[index].sec_id;
+    for (let index = 0; index < sid_ids.length; index++) {
+      const sec_id = sid_ids[index];
       list.push(this.marketDepth({ sec_id }));
     }
 
     const promiseList = (await Promise.all(list)).filter((el) => el.sec_id);
-    this.dbManager.bulkInsert(MarketDepth, promiseList);
 
-    // Recursive
-    return this.watchMarketDepth();
+    promiseList.forEach((el) => {
+      const sec_id = el.sec_id;
+      const data = rawList.find((el) => el.sid == sec_id) ?? {};
+      delete data.exch;
+      delete data.seg;
+      delete data.inst;
+      el.current_data = data ?? {};
+    });
+
+    await this.dbManager.insert(GainerEntity, {
+      data: { promiseList },
+      date: new Date(),
+    });
+
+    return promiseList;
   }
 }

@@ -9,6 +9,7 @@ import { StockPricing } from '../tables/Stock.pricing';
 import { MarketEntity } from '../tables/Markets';
 import { ChainEntity } from '../tables/Chain.data';
 import { MarketDepth } from '../tables/MarketDepth';
+import { GainerEntity } from '../tables/Gainer.data';
 
 export const DatabaseProvider = [
   {
@@ -25,6 +26,7 @@ export const DatabaseProvider = [
         database: Env.database.name,
         models: [
           ChainEntity,
+          GainerEntity,
           LiveData,
           MarketEntity,
           MarketDepth,

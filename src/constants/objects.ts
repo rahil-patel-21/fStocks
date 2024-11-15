@@ -15,15 +15,15 @@ export const kWatchable_Derivatives = [
   { name: 'NIFTY 07 NOV 24200 PUT', sec_id: 50384 },
 
   // FINNIFTY -> CALL
-  { name: 'FINNIFTY 05 NOV 23850 CALL', sec_id: 47878 },
-  { name: 'FINNIFTY 05 NOV 23900 CALL', sec_id: 47880 },
-  { name: 'FINNIFTY 05 NOV 23950 CALL', sec_id: 47884 },
-  { name: 'FINNIFTY 05 NOV 24000 CALL', sec_id: 47889 },
-  { name: 'FINNIFTY 05 NOV 24050 CALL', sec_id: 47893 },
-  { name: 'FINNIFTY 05 NOV 24100 CALL', sec_id: 47895 },
+  // { name: 'FINNIFTY 05 NOV 23850 CALL', sec_id: 47878 },
+  // { name: 'FINNIFTY 05 NOV 23900 CALL', sec_id: 47880 },
+  // { name: 'FINNIFTY 05 NOV 23950 CALL', sec_id: 47884 },
+  // { name: 'FINNIFTY 05 NOV 24000 CALL', sec_id: 47889 },
+  // { name: 'FINNIFTY 05 NOV 24050 CALL', sec_id: 47893 },
+  // { name: 'FINNIFTY 05 NOV 24100 CALL', sec_id: 47895 },
 
-  // FINNIFTY -> PUT
-  { name: 'FINNIFTY 05 NOV 23800 PUT', sec_id: 47877 },
-  { name: 'FINNIFTY 05 NOV 23850 PUT', sec_id: 47879 },
-  { name: 'FINNIFTY 05 NOV 23900 PUT', sec_id: 47883 },
+  // // FINNIFTY -> PUT
+  // { name: 'FINNIFTY 05 NOV 23800 PUT', sec_id: 47877 },
+  // { name: 'FINNIFTY 05 NOV 23850 PUT', sec_id: 47879 },
+  // { name: 'FINNIFTY 05 NOV 23900 PUT', sec_id: 47883 },
 ];
