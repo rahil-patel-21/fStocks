@@ -50,4 +50,12 @@ export class AppController {
         .catch((el) => {});
     }
   }
+
+  // Runs every 2 seconds between 9 AM to 3 PM in weekdays
+  @Cron('*/2 * 9-14 * * 1-5')
+  handle2SecCron() {
+    if (Env.server.isCronEnabled) {
+      this.dhan.gainers().catch((el) => {});
+    }
+  }
 }

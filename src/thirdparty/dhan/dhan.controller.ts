@@ -51,4 +51,9 @@ export class DhanController {
     this.service.watchMarketDepth();
     return {};
   }
+
+  @Get('gainers')
+  async funGainers() {
+    return await this.service.gainers();
+  }
 }
